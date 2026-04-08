@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Yūme FSMS">
+    <meta name="description" content="Yūme Ramen Food Safety Management System">
+    <title>Yūme FSMS Log</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%231a1a2e' width='192' height='192' rx='20'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='%23e94560'%3E夢%3C/text%3E%3C/svg%3E">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #e94560;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+            --bg: #f5f6fa;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+        }
+
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .install-prompt {
+            position: fixed;
+            bottom: 100px;
+            left: 16px;
+            right: 16px;
+            background: var(--primary);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .install-prompt.show {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .install-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .install-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .install-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .install-subtitle {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .install-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .install-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .install-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .install-btn.secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .offline-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--warning);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+        }
+
+        .offline-bar.show {
+            transform: translateY(0);
+        }
+
+        .app-header {
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .header-info {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* Location Selector */
+        .location-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .location-selector:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .location-selector select {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            padding-right: 20px;
+        }
+
+        .location-selector option {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Location Modal */
+        .location-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .location-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .location-modal-content {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 24px;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .location-modal.active .location-modal-content {
+            transform: scale(1);
+        }
+
+        .location-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .location-item {
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .location-item:hover {
+            background: rgba(233, 69, 96, 0.05);
+        }
+
+        .location-item.active {
+            border-color: var(--accent);
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .location-item input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .btn-add-location {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed var(--border);
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+
+        .log-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .log-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .log-card:active {
+            transform: scale(0.98);
+        }
+
+        .log-card.active {
+            border-color: var(--accent);
+            background: rgba(233, 69, 96, 0.02);
+        }
+
+        .log-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .log-card.active::before {
+            opacity: 1;
+        }
+
+        .log-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .log-icon.opening { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .log-icon.closing { background: rgba(156, 39, 176, 0.15); color: #9c27b0; }
+        .log-icon.temp { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+        .log-icon.hot { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+        .log-icon.cold { background: rgba(39, 174, 96, 0.15); color: #27ae60; }
+        .log-icon.delivery { background: rgba(243, 156, 18, 0.15); color: #f39c12; }
+        .log-icon.corrective { background: rgba(149, 165, 166, 0.15); color: #7f8c8d; }
+
+        .log-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .log-status {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .log-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .log-badge.pending {
+            background: var(--warning);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .log-container {
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .log-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-header h2 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .log-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-light {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+
+        .log-body {
+            padding: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-select {
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .checklist-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .checklist-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto auto;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .checklist-check {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .checklist-check.checked {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .checklist-text {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .checklist-yesno {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-yesno {
+            padding: 6px 16px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-yesno.active-yes {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-yesno.active-no {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .checklist-desc {
+            grid-column: 1 / -1;
+            margin-top: 8px;
+        }
+
+        .checklist-desc input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .temp-grid {
+            overflow-x: auto;
+        }
+
+        .temp-table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+        }
+
+        .temp-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            font-size: 13px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .temp-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .temp-input-cell {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .temp-input-cell:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        .temp-input-cell.unsafe {
+            border-color: var(--accent);
+            background: rgba(231, 76, 60, 0.05);
+            color: var(--accent);
+        }
+
+        .temp-input-cell.safe {
+            border-color: var(--success);
+            background: rgba(39, 174, 96, 0.05);
+            color: var(--success);
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 12px;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+
+        .btn-delete {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-add {
+            width: 100%;
+            padding: 16px;
+            border: 2px dashed var(--border);
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .signature-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid var(--border);
+        }
+
+        .signature-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .bottom-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 12px;
+            z-index: 90;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+            z-index: 99;
+        }
+
+        .sync-status.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* FIXED: Improved toast notification with proper dismissal */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--success);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1002;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            pointer-events: none;
+            min-width: 280px;
+            justify-content: center;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .toast.error {
+            background: var(--accent);
+        }
+
+        .toast.hide {
+            transform: translateX(-50%) translateY(-100px);
+            opacity: 0;
+        }
+
+        /* Location change notification specific styles */
+        .toast.location-toast {
+            background: var(--info);
+        }
+
+        @media (min-width: 768px) {
+            .log-selector {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .main-content {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="offline-bar" id="offlineBar">
+            ⚠️ You are offline - Data will sync when connection returns
+        </div>
+
+        <div class="install-prompt" id="installPrompt">
+            <div class="install-header">
+                <div class="install-icon">夢</div>
+                <div>
+                    <div class="install-title">Install Yūme FSMS</div>
+                    <div class="install-subtitle">Add to home screen for offline access</div>
+                </div>
+            </div>
+            <div class="install-actions">
+                <button class="install-btn secondary" onclick="app.dismissInstall()">Not Now</button>
+                <button class="install-btn primary" onclick="app.installApp()">Install</button>
+            </div>
+        </div>
+
+        <div class="sync-status" id="syncStatus">
+            <span>✓</span> Saved locally
+        </div>
+
+        <!-- Location Modal -->
+        <div class="location-modal" id="locationModal" onclick="app.closeLocationModal(event)">
+            <div class="location-modal-content" onclick="event.stopPropagation()">
+                <h3 style="margin-bottom: 8px;">Select Location</h3>
+                <p style="color: var(--text-light); font-size: 14px; margin-bottom: 16px;">Choose which restaurant location you're logging for:</p>
+                
+                <div class="location-list" id="locationList">
+                    <!-- Locations populated by JS -->
+                </div>
+                
+                <button class="btn-add-location" onclick="app.addNewLocation()">
+                    <span>+</span> Add New Location
+                </button>
+                
+                <button class="btn btn-secondary" style="margin-top: 16px;" onclick="app.closeLocationModal()">Close</button>
+            </div>
+        </div>
+
+        <header class="app-header">
+            <div class="header-top">
+                <div class="header-logo">
+                    <div class="logo-icon">夢</div>
+                    <div class="logo-text">
+                        <h1>Yūme FSMS Log</h1>
+                        <p>Food Safety Management System</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-icon" onclick="app.exportPDF()" title="Export PDF">📄</button>
+                    <button class="btn-icon" onclick="app.clearAllData()" title="Clear All">🗑️</button>
+                </div>
+            </div>
+            <div class="header-info">
+                <span>📅 <span id="currentDate"></span></span>
+                <span id="connectionStatus">🟢 Online</span>
+                <div class="location-selector" onclick="app.openLocationModal()" title="Click to change location">
+                    <span>📍</span>
+                    <select id="locationSelect" onchange="app.changeLocation(this.value)" onclick="event.stopPropagation()">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="log-selector" id="logSelector">
+                <div class="log-card active" onclick="app.selectLog('opening')">
+                    <div class="log-icon opening">🌅</div>
+                    <div class="log-title">Opening Checks</div>
+                    <div class="log-status">Pre-service safety</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('temp')">
+                    <div class="log-icon temp">🌡️</div>
+                    <div class="log-title">Temperature Log</div>
+                    <div class="log-status">Fridges & Freezers</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('hot')">
+                    <div class="log-icon hot">🔥</div>
+                    <div class="log-title">Hot Holding</div>
+                    <div class="log-status">≥63°C monitoring</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('cold')">
+                    <div class="log-icon cold">❄️</div>
+                    <div class="log-title">Cold Items</div>
+                    <div class="log-status">≤5°C monitoring</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('delivery')">
+                    <div class="log-icon delivery">📦</div>
+                    <div class="log-title">Delivery Log</div>
+                    <div class="log-status">Goods received</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('cooking')">
+                    <div class="log-icon hot">🍳</div>
+                    <div class="log-title">Cooking/Reheat</div>
+                    <div class="log-status">≥75°C core temp</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('corrective')">
+                    <div class="log-icon corrective">📝</div>
+                    <div class="log-title">Corrective Log</div>
+                    <div class="log-status">Issues & actions</div>
+                </div>
+                <div class="log-card" onclick="app.selectLog('closing')">
+                    <div class="log-icon closing">🌙</div>
+                    <div class="log-title">Closing Checks</div>
+                    <div class="log-status">End of day</div>
+                </div>
+            </div>
+
+            <div class="log-container" id="logContainer"></div>
+        </main>
+
+        <div class="bottom-actions">
+            <button class="btn btn-secondary" onclick="app.resetCurrentLog()">Reset</button>
+            <button class="btn btn-primary" onclick="app.saveCurrentLog()">💾 Save</button>
+        </div>
+
+        <!-- FIXED: Toast notification element -->
+        <div class="toast" id="toast">
+            <span id="toastIcon">✓</span>
+            <span id="toastMessage">Message</span>
+        </div>
+    </div>
+
+    <script>
+        class YumeFSMS {
+            constructor() {
+                this.currentLog = 'opening';
+                this.currentLocation = 'Battersea';
+                this.locations = ['Battersea', 'Shoreditch', 'Camden', 'Test Kitchen'];
+                this.data = {};
+                this.deferredPrompt = null;
+                this.isOnline = navigator.onLine;
+                this.toastTimeout = null; // FIXED: Track toast timeout
+                this.init();
+            }
+
+            init() {
+                this.loadLocations();
+                this.loadFromStorage();
+                this.updateDate();
+                this.setupEventListeners();
+                this.renderLocationSelector();
+                this.renderLog(this.currentLog);
+                this.checkInstallPrompt();
+                this.updateConnectionStatus();
+            }
+
+            // ==========================================
+            // LOCATION MANAGEMENT
+            // ==========================================
+            
+            loadLocations() {
+                const saved = localStorage.getItem('yume_fsms_locations');
+                if (saved) {
+                    this.locations = JSON.parse(saved);
+                }
+                const savedLocation = localStorage.getItem('yume_fsms_current_location');
+                if (savedLocation) {
+                    this.currentLocation = savedLocation;
+                }
+            }
+
+            saveLocations() {
+                localStorage.setItem('yume_fsms_locations', JSON.stringify(this.locations));
+                localStorage.setItem('yume_fsms_current_location', this.currentLocation);
+            }
+
+            renderLocationSelector() {
+                const select = document.getElementById('locationSelect');
+                select.innerHTML = this.locations.map(loc => 
+                    `<option value="${loc}" ${loc === this.currentLocation ? 'selected' : ''}>${loc}</option>`
+                ).join('');
+            }
+
+            changeLocation(location) {
+                // Save current location data first
+                this.saveToStorage();
+                
+                // Switch location
+                this.currentLocation = location;
+                this.saveLocations();
+                
+                // Load data for new location
+                this.loadFromStorage();
+                
+                // Refresh display
+                this.renderLog(this.currentLog);
+                
+                // FIXED: Show toast with proper dismissal
+                this.showToast(`📍 Switched to ${location}`, 'success', 3000, true);
+            }
+
+            openLocationModal() {
+                this.renderLocationList();
+                document.getElementById('locationModal').classList.add('active');
+            }
+
+            closeLocationModal(event) {
+                if (!event || event.target === document.getElementById('locationModal')) {
+                    document.getElementById('locationModal').classList.remove('active');
+                }
+            }
+
+            renderLocationList() {
+                const list = document.getElementById('locationList');
+                list.innerHTML = this.locations.map(loc => `
+                    <div class="location-item ${loc === this.currentLocation ? 'active' : ''}" onclick="app.selectLocationFromModal('${loc}')">
+                        <span>${loc}</span>
+                        ${loc === this.currentLocation ? '<span>✓</span>' : ''}
+                    </div>
+                `).join('');
+            }
+
+            selectLocationFromModal(location) {
+                this.changeLocation(location);
+                this.closeLocationModal();
+            }
+
+            addNewLocation() {
+                const name = prompt('Enter new location name:');
+                if (name && name.trim()) {
+                    const trimmed = name.trim();
+                    if (!this.locations.includes(trimmed)) {
+                        this.locations.push(trimmed);
+                        this.saveLocations();
+                        this.renderLocationSelector();
+                        this.renderLocationList();
+                        this.showToast(`Location "${trimmed}" added`, 'success');
+                    } else {
+                        this.showToast('Location already exists', 'error');
+                    }
+                }
+            }
+
+            // ==========================================
+            // DATA MANAGEMENT (Per Location)
+            // ==========================================
+
+            getStorageKey() {
+                return `yume_fsms_data_${this.currentLocation.replace(/\s+/g, '_').toLowerCase()}`;
+            }
+
+            initializeData() {
+                return {
+                    opening: {
+                        title: 'Daily Opening Checklist',
+                        staff: { am: '', pm: '' },
+                        checks: [
+                            { id: 'cold_storage', text: 'Cold Storage – Fridges, chilled displays and freezers maintaining safe temperatures (≤5°C for fridges; ≤-18°C for freezers)', yes: false, no: false, desc: '' },
+                            { id: 'hot_equipment', text: 'Hot Equipment – Ovens, stoves/hobs, stock pot burners functioning properly', yes: false, no: false, desc: '' },
+                            { id: 'staff_hygiene', text: 'Staff Hygiene – All food handlers fit for work, wearing clean uniforms', yes: false, no: false, desc: '' },
+                            { id: 'cleanliness', text: 'Cleanliness – Food prep areas and floors clean; bins emptied', yes: false, no: false, desc: '' },
+                            { id: 'handwashing', text: 'Handwashing Stations – Hot water, soap and paper towels available', yes: false, no: false, desc: '' },
+                            { id: 'pest', text: 'Pest Check – No signs of pest activity; entry points secure', yes: false, no: false, desc: '' },
+                            { id: 'sanitiser', text: 'Sanitiser & Cloths – Fresh solution at correct concentration', yes: false, no: false, desc: '' },
+                            { id: 'probe', text: 'Probe Thermometer – Working properly; probe wipes available', yes: false, no: false, desc: '' },
+                            { id: 'allergen', text: 'Allergen Information – Notice displayed; allergen info accurate', yes: false, no: false, desc: '' }
+                        ],
+                        signed: { name: '', signature: '' }
+                    },
+                    temp: {
+                        title: 'Fridge/Freezer Temperature Log',
+                        fridges: [
+                            { name: 'Walk-in Fridge #1', opening: '', check4pm: '', closing: '' },
+                            { name: 'Prep Fridge #2', opening: '', check4pm: '', closing: '' },
+                            { name: 'Prep Fridge #3', opening: '', check4pm: '', closing: '' }
+                        ],
+                        freezers: [
+                            { name: 'Freezer #1', opening: '', check4pm: '', closing: '' },
+                            { name: 'Freezer #2', opening: '', check4pm: '', closing: '' }
+                        ],
+                        notes: '',
+                        initials: ''
+                    },
+                    hot: {
+                        title: 'Hot Holding Monitoring Log',
+                        subtitle: 'Hot-held foods must be kept at or above 63°C. Check every 2 hours.',
+                        items: [
+                            { name: 'Chicken Broth', temps: ['', '', '', '', '', ''] },
+                            { name: 'Tonkotsu Broth', temps: ['', '', '', '', '', ''] },
+                            { name: 'Veggie Broth', temps: ['', '', '', '', '', ''] }
+                        ],
+                        times: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                        initials: ''
+                    },
+                    cold: {
+                        title: 'Cold Items Monitoring Log',
+                        subtitle: 'Chilled foods must be stored at 5°C or below. Check at least twice daily.',
+                        items: [
+                            { name: 'Chilled Noodles', temps: ['', '', '', '', '', ''] },
+                            { name: 'Prepared Vegetables', temps: ['', '', '', '', '', ''] }
+                        ],
+                        times: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                        initials: ''
+                    },
+                    delivery: {
+                        title: 'Receiving Delivery Log',
+                        entries: []
+                    },
+                    cooking: {
+                        title: 'Cooking & Reheating Temperature Log',
+                        subtitle: 'All cooked and reheated food must reach core temperature of at least 75°C.',
+                        items: [
+                            { name: 'Chicken Broth', time: '', temp: '', action: '' },
+                            { name: 'Tonkotsu Broth', time: '', temp: '', action: '' },
+                            { name: 'Veggie Broth', time: '', temp: '', action: '' }
+                        ]
+                    },
+                    corrective: {
+                        title: 'Corrective Action Log',
+                        entries: []
+                    },
+                    closing: {
+                        title: 'Daily Closing Checklist',
+                        checks: [
+                            { id: 'perishable', text: 'All perishable food stored correctly (labelled, covered, dated, in fridge ≤5°C)', yes: false, no: false, desc: '' },
+                            { id: 'leftover', text: 'Any leftover hot food discarded or cooled safely and stored properly', yes: false, no: false, desc: '' },
+                            { id: 'surfaces', text: 'All surfaces, utensils, chopping boards, and cooking equipment thoroughly cleaned', yes: false, no: false, desc: '' },
+                            { id: 'fridge_check', text: 'Fridge and freezer doors fully closed and temperatures re-checked', yes: false, no: false, desc: '' },
+                            { id: 'bins', text: 'Bins emptied and new liners added', yes: false, no: false, desc: '' },
+                            { id: 'cloths', text: 'All dirty cloths/aprons removed for washing', yes: false, no: false, desc: '' },
+                            { id: 'floors', text: 'Floors swept and mopped (including under counters and corners)', yes: false, no: false, desc: '' },
+                            { id: 'sanitiser', text: 'Sanitiser bottles/spray refilled and stored safely', yes: false, no: false, desc: '' },
+                            { id: 'pest', text: 'Pest control points checked and secured', yes: false, no: false, desc: '' },
+                            { id: 'equipment_off', text: 'All non-essential electrical/gas equipment turned off', yes: false, no: false, desc: '' },
+                            { id: 'maintenance', text: 'Any maintenance issues noted and reported', yes: false, no: false, desc: '' },
+                            { id: 'walkthrough', text: 'Final walkthrough done – no food left out, premises secure', yes: false, no: false, desc: '' }
+                        ],
+                        signed: { name: '', signature: '' }
+                    }
+                };
+            }
+
+            // ==========================================
+            // CORE FUNCTIONS
+            // ==========================================
+
+            setupEventListeners() {
+                window.addEventListener('online', () => this.handleConnectionChange(true));
+                window.addEventListener('offline', () => this.handleConnectionChange(false));
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    this.showInstallPrompt();
+                });
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') this.saveToStorage();
+                });
+                document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+            }
+
+            handleConnectionChange(online) {
+                this.isOnline = online;
+                this.updateConnectionStatus();
+                const offlineBar = document.getElementById('offlineBar');
+                if (online) {
+                    offlineBar.classList.remove('show');
+                    this.showToast('Back online', 'success');
+                } else {
+                    offlineBar.classList.add('show');
+                    this.showToast('You are offline - Working locally', 'error');
+                }
+            }
+
+            updateConnectionStatus() {
+                const status = document.getElementById('connectionStatus');
+                status.innerHTML = this.isOnline ? '🟢 Online' : '🔴 Offline';
+                status.style.color = this.isOnline ? '#27ae60' : '#e74c3c';
+            }
+
+            checkInstallPrompt() {
+                setTimeout(() => {
+                    if (this.deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+                        document.getElementById('installPrompt').classList.add('show');
+                    }
+                }, 3000);
+            }
+
+            showInstallPrompt() {
+                document.getElementById('installPrompt').classList.add('show');
+            }
+
+            dismissInstall() {
+                document.getElementById('installPrompt').classList.remove('show');
+            }
+
+            async installApp() {
+                if (!this.deferredPrompt) return;
+                this.deferredPrompt.prompt();
+                const { outcome } = await this.deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    this.showToast('App installed successfully!', 'success');
+                    this.dismissInstall();
+                }
+                this.deferredPrompt = null;
+            }
+
+            updateDate() {
+                const now = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', options);
+            }
+
+            today() {
+                return new Date().toISOString().split('T')[0];
+            }
+
+            now() {
+                return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            selectLog(logType) {
+                this.currentLog = logType;
+                document.querySelectorAll('.log-card').forEach(card => card.classList.remove('active'));
+                event.currentTarget.classList.add('active');
+                this.renderLog(logType);
+            }
+
+            // ==========================================
+            // RENDERERS
+            // ==========================================
+
+            renderLog(type) {
+                const container = document.getElementById('logContainer');
+                const data = this.data[type];
+                
+                switch(type) {
+                    case 'opening':
+                        container.innerHTML = this.renderOpeningLog(data);
+                        break;
+                    case 'temp':
+                        container.innerHTML = this.renderTempLog(data);
+                        break;
+                    case 'hot':
+                        container.innerHTML = this.renderHotColdLog(data, 'hot');
+                        break;
+                    case 'cold':
+                        container.innerHTML = this.renderHotColdLog(data, 'cold');
+                        break;
+                    case 'delivery':
+                        container.innerHTML = this.renderDeliveryLog(data);
+                        break;
+                    case 'cooking':
+                        container.innerHTML = this.renderCookingLog(data);
+                        break;
+                    case 'corrective':
+                        container.innerHTML = this.renderCorrectiveLog(data);
+                        break;
+                    case 'closing':
+                        container.innerHTML = this.renderClosingLog(data);
+                        break;
+                }
+            }
+
+            renderOpeningLog(data) {
+                return `
+                    <div class="log-header"><h2>🌅 ${data.title}</h2></div>
+                    <div class="log-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" value="${this.today()}" id="openingDate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">AM Staff</label>
+                                <input type="text" class="form-input" placeholder="Name" value="${data.staff.am}" onchange="app.data.opening.staff.am = this.value">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">PM Staff</label>
+                                <input type="text" class="form-input" placeholder="Name" value="${data.staff.pm}" onchange="app.data.opening.staff.pm = this.value">
+                            </div>
+                        </div>
+                        <div class="checklist-grid">
+                            ${data.checks.map((check, idx) => `
+                                <div class="checklist-item">
+                                    <div class="checklist-check ${check.yes ? 'checked' : ''}" onclick="app.toggleCheck('opening', ${idx}, 'yes')">${check.yes ? '✓' : ''}</div>
+                                    <span class="checklist-text">${check.text}</span>
+                                    <div class="checklist-yesno">
+                                        <button class="btn-yesno ${check.yes ? 'active-yes' : ''}" onclick="app.setYesNo('opening', ${idx}, 'yes')">YES</button>
+                                        <button class="btn-yesno ${check.no ? 'active-no' : ''}" onclick="app.setYesNo('opening', ${idx}, 'no')">NO</button>
+                                    </div>
+                                    ${check.no ? `<div class="checklist-desc"><input type="text" placeholder="Describe corrective action..." value="${check.desc}" onchange="app.data.opening.checks[${idx}].desc = this.value"></div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="signature-section">
+                            <div class="signature-row">
+                                <div class="form-group">
+                                    <label class="form-label">Name</label>
+                                    <input type="text" class="form-input" placeholder="Print name" value="${data.signed.name}" onchange="app.data.opening.signed.name = this.value">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Signature</label>
+                                    <input type="text" class="form-input" placeholder="Sign here" value="${data.signed.signature}" onchange="app.data.opening.signed.signature = this.value">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderTempLog(data) {
+                return `
+                    <div class="log-header">
+                        <h2>🌡️ ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.addFridge()">+ Fridge</button>
+                            <button class="btn-sm btn-light" onclick="app.addFreezer()">+ Freezer</button>
+                        </div>
+                    </div>
+                    <div class="log-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" value="${this.today()}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Initials</label>
+                                <input type="text" class="form-input" placeholder="Staff initials" value="${data.initials}" onchange="app.data.temp.initials = this.value">
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 16px; color: var(--text-light); font-size: 14px;">
+                            Fridges: 1–5°C (max 8°C) | Freezers: -18°C or below
+                        </p>
+                        <div class="temp-grid">
+                            <table class="temp-table">
+                                <thead>
+                                    <tr><th>Equipment</th><th>Opening</th><th>4pm</th><th>Closing</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${data.fridges.map((fridge, idx) => `
+                                        <tr>
+                                            <td><strong>${fridge.name}</strong></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.opening, 'fridge')}" value="${fridge.opening}" onchange="app.updateTemp('fridges', ${idx}, 'opening', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.check4pm, 'fridge')}" value="${fridge.check4pm}" onchange="app.updateTemp('fridges', ${idx}, 'check4pm', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.closing, 'fridge')}" value="${fridge.closing}" onchange="app.updateTemp('fridges', ${idx}, 'closing', this.value)" placeholder="°C"></td>
+                                            <td><button class="btn-delete" onclick="app.removeEquipment('fridges', ${idx})">✕</button></td>
+                                        </tr>
+                                    `).join('')}
+                                    ${data.freezers.map((freezer, idx) => `
+                                        <tr style="background: rgba(52, 152, 219, 0.05);">
+                                            <td><strong>${freezer.name}</strong></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.opening, 'freezer')}" value="${freezer.opening}" onchange="app.updateTemp('freezers', ${idx}, 'opening', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.check4pm, 'freezer')}" value="${freezer.check4pm}" onchange="app.updateTemp('freezers', ${idx}, 'check4pm', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.closing, 'freezer')}" value="${freezer.closing}" onchange="app.updateTemp('freezers', ${idx}, 'closing', this.value)" placeholder="°C"></td>
+                                            <td><button class="btn-delete" onclick="app.removeEquipment('freezers', ${idx})">✕</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label">Notes / Corrective Actions</label>
+                            <textarea class="form-input" rows="3" placeholder="Record any issues..." onchange="app.data.temp.notes = this.value">${data.notes}</textarea>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderHotColdLog(data, type) {
+                const icon = type === 'hot' ? '🔥' : '❄️';
+                return `
+                    <div class="log-header">
+                        <h2>${icon} ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.addHotColdItem('${type}')">+ Item</button>
+                        </div>
+                    </div>
+                    <div class="log-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" value="${this.today()}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Initials</label>
+                                <input type="text" class="form-input" placeholder="Staff initials" value="${data.initials}" onchange="app.data.${type}.initials = this.value">
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 16px; color: var(--text-light); font-size: 14px;">${data.subtitle}</p>
+                        <div class="temp-grid">
+                            <table class="temp-table">
+                                <thead>
+                                    <tr><th>Item</th>${data.times.map(t => `<th>${t}</th>`).join('')}<th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${data.items.map((item, idx) => `
+                                        <tr>
+                                            <td><input type="text" class="form-input" value="${item.name}" onchange="app.updateItemName('${type}', ${idx}, this.value)" style="min-width: 150px;"></td>
+                                            ${item.temps.map((temp, tidx) => `
+                                                <td><input type="number" class="temp-input-cell ${this.getHotColdClass(temp, type)}" value="${temp}" onchange="app.updateHotColdTemp('${type}', ${idx}, ${tidx}, this.value)" placeholder="°C"></td>
+                                            `).join('')}
+                                            <td><button class="btn-delete" onclick="app.removeHotColdItem('${type}', ${idx})">✕</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderDeliveryLog(data) {
+                return `
+                    <div class="log-header">
+                        <h2>📦 ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-accent" onclick="app.addDeliveryEntry()">+ Add Entry</button>
+                        </div>
+                    </div>
+                    <div class="log-body">
+                        <div class="temp-grid">
+                            <table class="temp-table">
+                                <thead>
+                                    <tr><th>Date</th><th>Product</th><th>Temp (°C)</th><th>Comments</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${data.entries.length === 0 ? `
+                                        <tr><td colspan="5" style="text-align: center; padding: 32px; color: var(--text-light);">No deliveries recorded. Click "+ Add Entry" to log a delivery.</td></tr>
+                                    ` : data.entries.map((entry, idx) => `
+                                        <tr>
+                                            <td><input type="date" class="form-input" value="${entry.date}" onchange="app.updateDelivery(${idx}, 'date', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${entry.product}" placeholder="Product name" onchange="app.updateDelivery(${idx}, 'product', this.value)"></td>
+                                            <td><input type="number" class="temp-input-cell ${entry.temp > 8 ? 'unsafe' : entry.temp ? 'safe' : ''}" value="${entry.temp}" placeholder="°C" onchange="app.updateDelivery(${idx}, 'temp', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${entry.comments}" placeholder="Comments" onchange="app.updateDelivery(${idx}, 'comments', this.value)"></td>
+                                            <td><button class="btn-delete" onclick="app.removeDelivery(${idx})">✕</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderCookingLog(data) {
+                return `
+                    <div class="log-header">
+                        <h2>🍳 ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.addCookingItem()">+ Item</button>
+                        </div>
+                    </div>
+                    <div class="log-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" value="${this.today()}">
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 16px; color: var(--text-light); font-size: 14px;">${data.subtitle}</p>
+                        <div class="item-list">
+                            ${data.items.map((item, idx) => `
+                                <div>
+                                    <div class="item-row">
+                                        <div class="item-name">
+                                            <input type="text" class="form-input" value="${item.name}" placeholder="Item name" onchange="app.updateCookingItem(${idx}, 'name', this.value)">
+                                        </div>
+                                        <div class="item-temps">
+                                            <input type="time" class="form-input" value="${item.time}" onchange="app.updateCookingItem(${idx}, 'time', this.value)" style="width: 120px;">
+                                            <input type="number" class="temp-input-cell ${item.temp && item.temp < 75 ? 'unsafe' : item.temp ? 'safe' : ''}" value="${item.temp}" placeholder="°C" onchange="app.updateCookingItem(${idx}, 'temp', this.value)" style="width: 80px;">
+                                        </div>
+                                        <button class="btn-delete" onclick="app.removeCookingItem(${idx})">✕</button>
+                                    </div>
+                                    ${item.temp && item.temp < 75 ? `
+                                        <div style="margin-top: 8px; padding: 12px; background: rgba(231, 76, 60, 0.1); border-radius: 8px; border-left: 3px solid var(--accent);">
+                                            <input type="text" class="form-input" value="${item.action}" placeholder="Corrective action taken..." onchange="app.updateCookingItem(${idx}, 'action', this.value)" style="border: none; background: transparent;">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn-add" onclick="app.addCookingItem()"><span>+</span> Add Item</button>
+                    </div>
+                `;
+            }
+
+            renderCorrectiveLog(data) {
+                return `
+                    <div class="log-header">
+                        <h2>📝 ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-accent" onclick="app.addCorrectiveEntry()">+ Add Entry</button>
+                        </div>
+                    </div>
+                    <div class="log-body">
+                        <div class="temp-grid">
+                            <table class="temp-table">
+                                <thead>
+                                    <tr><th>Date & Time</th><th>Issue</th><th>Action Taken</th><th>Responsible</th><th>Verified By</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${data.entries.length === 0 ? `
+                                        <tr><td colspan="6" style="text-align: center; padding: 32px; color: var(--text-light);">No corrective actions recorded.</td></tr>
+                                    ` : data.entries.map((entry, idx) => `
+                                        <tr>
+                                            <td><input type="datetime-local" class="form-input" value="${entry.datetime}" onchange="app.updateCorrective(${idx}, 'datetime', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${entry.issue}" placeholder="Describe issue" onchange="app.updateCorrective(${idx}, 'issue', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${entry.action}" placeholder="Action taken" onchange="app.updateCorrective(${idx}, 'action', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${entry.person}" placeholder="Name" onchange="app.updateCorrective(${idx}, 'person', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${entry.verified}" placeholder="Verified by" onchange="app.updateCorrective(${idx}, 'verified', this.value)"></td>
+                                            <td><button class="btn-delete" onclick="app.removeCorrective(${idx})">✕</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderClosingLog(data) {
+                return `
+                    <div class="log-header"><h2>🌙 ${data.title}</h2></div>
+                    <div class="log-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" value="${this.today()}">
+                            </div>
+                        </div>
+                        <div class="checklist-grid">
+                            ${data.checks.map((check, idx) => `
+                                <div class="checklist-item">
+                                    <div class="checklist-check ${check.yes ? 'checked' : ''}" onclick="app.toggleCheck('closing', ${idx}, 'yes')">${check.yes ? '✓' : ''}</div>
+                                    <span class="checklist-text">${check.text}</span>
+                                    <div class="checklist-yesno">
+                                        <button class="btn-yesno ${check.yes ? 'active-yes' : ''}" onclick="app.setYesNo('closing', ${idx}, 'yes')">YES</button>
+                                        <button class="btn-yesno ${check.no ? 'active-no' : ''}" onclick="app.setYesNo('closing', ${idx}, 'no')">NO</button>
+                                    </div>
+                                    ${check.no ? `<div class="checklist-desc"><input type="text" placeholder="Describe corrective action..." value="${check.desc}" onchange="app.data.closing.checks[${idx}].desc = this.value"></div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="signature-section">
+                            <div class="signature-row">
+                                <div class="form-group">
+                                    <label class="form-label">Name</label>
+                                    <input type="text" class="form-input" placeholder="Print name" value="${data.signed.name}" onchange="app.data.closing.signed.name = this.value">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Signature</label>
+                                    <input type="text" class="form-input" placeholder="Sign here" value="${data.signed.signature}" onchange="app.data.closing.signed.signature = this.value">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ==========================================
+            // ACTIONS
+            // ==========================================
+
+            toggleCheck(logType, idx, type) {
+                const check = this.data[logType].checks[idx];
+                if (type === 'yes') {
+                    check.yes = !check.yes;
+                    if (check.yes) check.no = false;
+                } else {
+                    check.no = !check.no;
+                    if (check.no) check.yes = false;
+                }
+                this.renderLog(logType);
+            }
+
+            setYesNo(logType, idx, val) {
+                const check = this.data[logType].checks[idx];
+                if (val === 'yes') {
+                    check.yes = !check.yes;
+                    if (check.yes) check.no = false;
+                } else {
+                    check.no = !check.no;
+                    if (check.no) check.yes = false;
+                }
+                this.renderLog(logType);
+            }
+
+            getTempClass(value, type) {
+                if (!value) return '';
+                const num = parseFloat(value);
+                if (type === 'fridge') return num > 5 ? 'unsafe' : 'safe';
+                return num > -18 ? 'unsafe' : 'safe';
+            }
+
+            getHotColdClass(value, type) {
+                if (!value) return '';
+                const num = parseFloat(value);
+                if (type === 'hot') return num < 63 ? 'unsafe' : 'safe';
+                return num > 5 ? 'unsafe' : 'safe';
+            }
+
+            updateTemp(equipment, idx, field, value) {
+                this.data.temp[equipment][idx][field] = value;
+                this.renderLog('temp');
+            }
+
+            addFridge() {
+                const num = this.data.temp.fridges.length + 1;
+                this.data.temp.fridges.push({ name: `Fridge #${num}`, opening: '', check4pm: '', closing: '' });
+                this.renderLog('temp');
+            }
+
+            addFreezer() {
+                const num = this.data.temp.freezers.length + 1;
+                this.data.temp.freezers.push({ name: `Freezer #${num}`, opening: '', check4pm: '', closing: '' });
+                this.renderLog('temp');
+            }
+
+            removeEquipment(type, idx) {
+                if (confirm('Remove this equipment?')) {
+                    this.data.temp[type].splice(idx, 1);
+                    this.renderLog('temp');
+                }
+            }
+
+            addHotColdItem(type) {
+                this.data[type].items.push({ name: 'New Item', temps: ['', '', '', '', '', ''] });
+                this.renderLog(type);
+            }
+
+            removeHotColdItem(type, idx) {
+                if (confirm('Remove this item?')) {
+                    this.data[type].items.splice(idx, 1);
+                    this.renderLog(type);
+                }
+            }
+
+            updateItemName(type, idx, value) {
+                this.data[type].items[idx].name = value;
+            }
+
+            updateHotColdTemp(type, itemIdx, tempIdx, value) {
+                this.data[type].items[itemIdx].temps[tempIdx] = value;
+                this.renderLog(type);
+            }
+
+            addDeliveryEntry() {
+                this.data.delivery.entries.push({ date: this.today(), product: '', temp: '', comments: '' });
+                this.renderLog('delivery');
+            }
+
+            updateDelivery(idx, field, value) {
+                this.data.delivery.entries[idx][field] = value;
+                this.renderLog('delivery');
+            }
+
+            removeDelivery(idx) {
+                if (confirm('Remove this entry?')) {
+                    this.data.delivery.entries.splice(idx, 1);
+                    this.renderLog('delivery');
+                }
+            }
+
+            addCookingItem() {
+                this.data.cooking.items.push({ name: '', time: '', temp: '', action: '' });
+                this.renderLog('cooking');
+            }
+
+            updateCookingItem(idx, field, value) {
+                this.data.cooking.items[idx][field] = value;
+                if (field === 'temp') this.renderLog('cooking');
+            }
+
+            removeCookingItem(idx) {
+                if (confirm('Remove this item?')) {
+                    this.data.cooking.items.splice(idx, 1);
+                    this.renderLog('cooking');
+                }
+            }
+
+            addCorrectiveEntry() {
+                const now = new Date();
+                this.data.corrective.entries.push({
+                    datetime: now.toISOString().slice(0, 16),
+                    issue: '',
+                    action: '',
+                    person: '',
+                    verified: ''
+                });
+                this.renderLog('corrective');
+            }
+
+            updateCorrective(idx, field, value) {
+                this.data.corrective.entries[idx][field] = value;
+            }
+
+            removeCorrective(idx) {
+                if (confirm('Remove this entry?')) {
+                    this.data.corrective.entries.splice(idx, 1);
+                    this.renderLog('corrective');
+                }
+            }
+
+            // ==========================================
+            // STORAGE (Per Location)
+            // ==========================================
+
+            saveToStorage() {
+                try {
+                    localStorage.setItem(this.getStorageKey(), JSON.stringify(this.data));
+                    this.showSyncStatus();
+                    return true;
+                } catch (e) {
+                    this.showToast('Storage full - export data', 'error');
+                    return false;
+                }
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem(this.getStorageKey());
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        this.data = { ...this.initializeData(), ...parsed };
+                    } catch (e) {
+                        this.data = this.initializeData();
+                    }
+                } else {
+                    this.data = this.initializeData();
+                }
+            }
+
+            showSyncStatus() {
+                const status = document.getElementById('syncStatus');
+                status.classList.add('show');
+                setTimeout(() => status.classList.remove('show'), 2000);
+            }
+
+            saveCurrentLog() {
+                if (this.saveToStorage()) {
+                    this.showToast(`Saved for ${this.currentLocation}` + (this.isOnline ? '' : ' (offline)'), 'success');
+                }
+            }
+
+            resetCurrentLog() {
+                if (confirm('Reset current log? This cannot be undone.')) {
+                    const defaults = this.initializeData();
+                    this.data[this.currentLog] = defaults[this.currentLog];
+                    this.renderLog(this.currentLog);
+                    this.showToast('Log reset', 'error');
+                }
+            }
+
+            clearAllData() {
+                if (confirm(`⚠️ Delete ALL data for ${this.currentLocation} permanently?`)) {
+                    localStorage.removeItem(this.getStorageKey());
+                    this.data = this.initializeData();
+                    this.renderLog(this.currentLog);
+                    this.showToast('All data cleared', 'error');
+                }
+            }
+
+            // ==========================================
+            // FIXED: TOAST NOTIFICATION SYSTEM
+            // ==========================================
+            
+            showToast(message, type = 'success', duration = 3000, isLocationChange = false) {
+                const toast = document.getElementById('toast');
+                const toastIcon = document.getElementById('toastIcon');
+                const toastMessage = document.getElementById('toastMessage');
+                
+                // Clear any existing timeout to prevent overlapping
+                if (this.toastTimeout) {
+                    clearTimeout(this.toastTimeout);
+                    this.toastTimeout = null;
+                }
+                
+                // Reset toast state
+                toast.classList.remove('show', 'hide', 'error', 'location-toast');
+                
+                // Force reflow to ensure clean state
+                void toast.offsetWidth;
+                
+                // Set content
+                toastIcon.textContent = type === 'success' ? '✓' : '⚠️';
+                toastMessage.textContent = message;
+                
+                // Add appropriate classes
+                if (type === 'error') {
+                    toast.classList.add('error');
+                }
+                if (isLocationChange) {
+                    toast.classList.add('location-toast');
+                }
+                
+                // Show toast
+                toast.classList.add('show');
+                
+                // Auto-hide after duration
+                this.toastTimeout = setTimeout(() => {
+                    this.hideToast();
+                }, duration);
+            }
+
+            hideToast() {
+                const toast = document.getElementById('toast');
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                
+                // Clear timeout reference
+                if (this.toastTimeout) {
+                    clearTimeout(this.toastTimeout);
+                    this.toastTimeout = null;
+                }
+                
+                // Remove hide class after transition completes
+                setTimeout(() => {
+                    toast.classList.remove('hide');
+                }, 300);
+            }
+
+            // ==========================================
+            // PDF EXPORT (Includes Location)
+            // ==========================================
+            exportPDF() {
+                const printWindow = window.open('', '_blank');
+                const date = this.today();
+                
+                let html = `
+                    <html>
+                    <head>
+                        <title>Yume FSMS Log - ${this.currentLocation} - ${date}</title>
+                        <style>
+                            @page { size: A4; margin: 15mm; }
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                padding: 20px; 
+                                max-width: 100%; 
+                                margin: 0 auto;
+                                font-size: 11px;
+                                line-height: 1.4;
+                            }
+                            h1 { 
+                                color: #1a1a2e; 
+                                border-bottom: 3px solid #e94560; 
+                                padding-bottom: 10px;
+                                font-size: 20px;
+                            }
+                            h2 { 
+                                color: #1a1a2e; 
+                                margin-top: 25px; 
+                                font-size: 14px;
+                                background: #f5f6fa;
+                                padding: 8px;
+                                border-left: 4px solid #e94560;
+                            }
+                            table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin: 10px 0; 
+                                font-size: 10px;
+                            }
+                            th { 
+                                background: #1a1a2e; 
+                                color: white; 
+                                padding: 8px; 
+                                text-align: left;
+                                font-weight: 600;
+                            }
+                            td { 
+                                padding: 6px 8px; 
+                                border-bottom: 1px solid #ddd; 
+                                vertical-align: top;
+                            }
+                            tr:nth-child(even) { background: #f9f9f9; }
+                            .safe { color: #27ae60; font-weight: bold; }
+                            .unsafe { color: #e74c3c; font-weight: bold; }
+                            .check-yes { color: #27ae60; font-weight: bold; }
+                            .check-no { color: #e74c3c; font-weight: bold; }
+                            .section { margin-bottom: 20px; page-break-inside: avoid; }
+                            .header-info { 
+                                background: #f5f6fa; 
+                                padding: 10px; 
+                                border-radius: 5px;
+                                margin-bottom: 20px;
+                            }
+                            .location-badge {
+                                display: inline-block;
+                                background: #e94560;
+                                color: white;
+                                padding: 4px 12px;
+                                border-radius: 12px;
+                                font-size: 12px;
+                                font-weight: bold;
+                                margin-left: 10px;
+                            }
+                            .signature { 
+                                margin-top: 10px; 
+                                padding: 10px; 
+                                background: #f5f6fa;
+                                border: 1px solid #ddd;
+                            }
+                            .notes { 
+                                font-style: italic; 
+                                color: #666;
+                                font-size: 9px;
+                            }
+                            @media print { 
+                                body { padding: 10px; }
+                                .section { page-break-inside: avoid; }
+                                h2 { page-break-after: avoid; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="section">
+                            <h1>
+                                🍜 YŪME RAMEN - FSMS Daily Log
+                                <span class="location-badge">📍 ${this.currentLocation}</span>
+                            </h1>
+                            <div class="header-info">
+                                <strong>Date:</strong> ${date} | 
+                                <strong>Location:</strong> ${this.currentLocation} | 
+                                <strong>Generated:</strong> ${new Date().toLocaleString('en-GB')}
+                            </div>
+                        </div>
+                `;
+
+                let hasData = false;
+
+                // 1. OPENING CHECKS
+                if (this.data.opening.checks.some(c => c.yes || c.no) || this.data.opening.signed.name) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>🌅 OPENING CHECKS</h2>
+                            <p><strong>AM Staff:</strong> ${this.data.opening.staff.am || 'N/A'} | 
+                               <strong>PM Staff:</strong> ${this.data.opening.staff.pm || 'N/A'}</p>
+                            <table>
+                                <thead>
+                                    <tr><th style="width: 60%;">Check Item</th><th style="width: 10%;">Status</th><th style="width: 30%;">Notes</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.opening.checks.forEach(c => {
+                        const status = c.yes ? '<span class="check-yes">✓ YES</span>' : c.no ? '<span class="check-no">✗ NO</span>' : '<span style="color: #999;">-</span>';
+                        const desc = c.desc ? c.desc : '';
+                        html += `<tr><td>${c.text}</td><td style="text-align: center;">${status}</td><td class="notes">${desc}</td></tr>`;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                            <div class="signature">
+                                <strong>Signed by:</strong> ${this.data.opening.signed.name || 'Not signed'} 
+                                ${this.data.opening.signed.signature ? `(${this.data.opening.signed.signature})` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 2. TEMPERATURE LOG
+                const hasFridgeData = this.data.temp.fridges.some(f => f.opening || f.check4pm || f.closing);
+                const hasFreezerData = this.data.temp.freezers.some(f => f.opening || f.check4pm || f.closing);
+                
+                if (hasFridgeData || hasFreezerData) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>🌡️ FRIDGE/FREEZER TEMPERATURE LOG</h2>
+                            <p><strong>Initials:</strong> ${this.data.temp.initials || 'N/A'} | 
+                               <em>Fridges: 1-5°C | Freezers: ≤-18°C</em></p>
+                            <table>
+                                <thead>
+                                    <tr><th>Equipment</th><th>Opening</th><th>4pm Check</th><th>Closing</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    this.data.temp.fridges.forEach(item => {
+                        const getClass = (val) => {
+                            if (!val) return '';
+                            const n = parseFloat(val);
+                            return n > 5 ? 'unsafe' : 'safe';
+                        };
+                        html += `
+                            <tr>
+                                <td><strong>${item.name}</strong></td>
+                                <td class="${getClass(item.opening)}">${item.opening ? item.opening + '°C' : '-'}</td>
+                                <td class="${getClass(item.check4pm)}">${item.check4pm ? item.check4pm + '°C' : '-'}</td>
+                                <td class="${getClass(item.closing)}">${item.closing ? item.closing + '°C' : '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    this.data.temp.freezers.forEach(item => {
+                        const getClass = (val) => {
+                            if (!val) return '';
+                            const n = parseFloat(val);
+                            return n > -18 ? 'unsafe' : 'safe';
+                        };
+                        html += `
+                            <tr style="background: rgba(52, 152, 219, 0.05);">
+                                <td><strong>${item.name}</strong></td>
+                                <td class="${getClass(item.opening)}">${item.opening ? item.opening + '°C' : '-'}</td>
+                                <td class="${getClass(item.check4pm)}">${item.check4pm ? item.check4pm + '°C' : '-'}</td>
+                                <td class="${getClass(item.closing)}">${item.closing ? item.closing + '°C' : '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                    `;
+                    if (this.data.temp.notes) {
+                        html += `<p><strong>Notes:</strong> <span class="notes">${this.data.temp.notes}</span></p>`;
+                    }
+                    html += `</div>`;
+                }
+
+                // 3. HOT HOLDING LOG
+                const hasHotData = this.data.hot.items.some(i => i.temps.some(t => t !== ''));
+                if (hasHotData) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>🔥 HOT HOLDING MONITORING LOG</h2>
+                            <p><strong>Initials:</strong> ${this.data.hot.initials || 'N/A'} | 
+                               <em>Must be ≥63°C | Check every 2 hours</em></p>
+                            <table>
+                                <thead>
+                                    <tr><th>Item</th>${this.data.hot.times.map(t => `<th>${t}</th>`).join('')}</tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.hot.items.forEach(item => {
+                        html += `<tr><td><strong>${item.name}</strong></td>`;
+                        item.temps.forEach(temp => {
+                            if (!temp) {
+                                html += `<td>-</td>`;
+                            } else {
+                                const n = parseFloat(temp);
+                                const cls = n < 63 ? 'unsafe' : 'safe';
+                                html += `<td class="${cls}">${temp}°C</td>`;
+                            }
+                        });
+                        html += `</tr>`;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // 4. COLD ITEMS LOG
+                const hasColdData = this.data.cold.items.some(i => i.temps.some(t => t !== ''));
+                if (hasColdData) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>❄️ COLD ITEMS MONITORING LOG</h2>
+                            <p><strong>Initials:</strong> ${this.data.cold.initials || 'N/A'} | 
+                               <em>Must be ≤5°C (max 8°C)</em></p>
+                            <table>
+                                <thead>
+                                    <tr><th>Item</th>${this.data.cold.times.map(t => `<th>${t}</th>`).join('')}</tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.cold.items.forEach(item => {
+                        html += `<tr><td><strong>${item.name}</strong></td>`;
+                        item.temps.forEach(temp => {
+                            if (!temp) {
+                                html += `<td>-</td>`;
+                            } else {
+                                const n = parseFloat(temp);
+                                const cls = n > 5 ? 'unsafe' : 'safe';
+                                html += `<td class="${cls}">${temp}°C</td>`;
+                            }
+                        });
+                        html += `</tr>`;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // 5. DELIVERY LOG
+                if (this.data.delivery.entries.length > 0) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>📦 RECEIVING DELIVERY LOG</h2>
+                            <table>
+                                <thead>
+                                    <tr><th>Date</th><th>Product</th><th>Temp</th><th>Comments</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.delivery.entries.forEach(e => {
+                        const tempClass = e.temp && parseFloat(e.temp) > 8 ? 'unsafe' : e.temp ? 'safe' : '';
+                        html += `
+                            <tr>
+                                <td>${e.date || '-'}</td>
+                                <td>${e.product || '-'}</td>
+                                <td class="${tempClass}">${e.temp ? e.temp + '°C' : '-'}</td>
+                                <td class="notes">${e.comments || ''}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // 6. COOKING/REHEATING LOG
+                const hasCookingData = this.data.cooking.items.some(i => i.temp || i.time || i.name);
+                if (hasCookingData) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>🍳 COOKING & REHEATING TEMPERATURE LOG</h2>
+                            <p><em>Must reach ≥75°C core temperature</em></p>
+                            <table>
+                                <thead>
+                                    <tr><th>Item</th><th>Time</th><th>Temperature</th><th>Corrective Action</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.cooking.items.forEach(item => {
+                        const tempClass = item.temp && parseFloat(item.temp) < 75 ? 'unsafe' : item.temp ? 'safe' : '';
+                        html += `
+                            <tr>
+                                <td><strong>${item.name || '-'}</strong></td>
+                                <td>${item.time || '-'}</td>
+                                <td class="${tempClass}">${item.temp ? item.temp + '°C' : '-'}</td>
+                                <td class="notes">${item.action || (item.temp && parseFloat(item.temp) < 75 ? '<span class="unsafe">Below 75°C - action required</span>' : '')}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // 7. CORRECTIVE ACTION LOG
+                if (this.data.corrective.entries.length > 0) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>📝 CORRECTIVE ACTION LOG</h2>
+                            <table>
+                                <thead>
+                                    <tr><th>Date/Time</th><th>Issue Identified</th><th>Immediate Action</th><th>Responsible</th><th>Verified By</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.corrective.entries.forEach(e => {
+                        html += `
+                            <tr>
+                                <td>${e.datetime ? e.datetime.replace('T', ' ') : '-'}</td>
+                                <td>${e.issue || '-'}</td>
+                                <td>${e.action || '-'}</td>
+                                <td>${e.person || '-'}</td>
+                                <td>${e.verified || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // 8. CLOSING CHECKS
+                if (this.data.closing.checks.some(c => c.yes || c.no) || this.data.closing.signed.name) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>🌙 CLOSING CHECKS</h2>
+                            <table>
+                                <thead>
+                                    <tr><th style="width: 60%;">Check Item</th><th style="width: 10%;">Status</th><th style="width: 30%;">Notes</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    this.data.closing.checks.forEach(c => {
+                        const status = c.yes ? '<span class="check-yes">✓ YES</span>' : c.no ? '<span class="check-no">✗ NO</span>' : '<span style="color: #999;">-</span>';
+                        const desc = c.desc ? c.desc : '';
+                        html += `<tr><td>${c.text}</td><td style="text-align: center;">${status}</td><td class="notes">${desc}</td></tr>`;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                            <div class="signature">
+                                <strong>Signed by:</strong> ${this.data.closing.signed.name || 'Not signed'} 
+                                ${this.data.closing.signed.signature ? `(${this.data.closing.signed.signature})` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (!hasData) {
+                    html += `
+                        <div class="section" style="text-align: center; padding: 40px; color: #666;">
+                            <h2>No Data Recorded</h2>
+                            <p>No logs have been filled out for ${this.currentLocation} today.</p>
+                        </div>
+                    `;
+                }
+
+                html += `
+                        <hr style="margin-top: 30px; border: none; border-top: 2px solid #e94560;">
+                        <p style="font-size: 9px; color: #666; margin-top: 20px; text-align: center;">
+                            <strong>Yūme Ramen FSMS Log - ${this.currentLocation}</strong> - Confidential - Internal Use Only<br>
+                            This document is part of the Food Safety Management System and must be retained for inspection purposes.
+                        </p>
+                    </body>
+                    </html>
+                `;
+                
+                printWindow.document.write(html);
+                printWindow.document.close();
+                
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
+                
+                this.showToast('PDF export ready for ' + this.currentLocation, hasData ? 'success' : 'error');
+            }
+        }
+
+        const app = new YumeFSMS();
+
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'yume-fsms-v1';
+                const urlsToCache = ['/'];
+                self.addEventListener('install', event => {
+                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+                    self.skipWaiting();
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW failed'));
+        }
+    </script>
+</body>
+</html>
