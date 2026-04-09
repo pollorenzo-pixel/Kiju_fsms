@@ -2139,14 +2139,34 @@
                                 color: #666;
                                 font-size: 9px;
                             }
+                            .export-nav {
+                                margin-bottom: 16px;
+                            }
+                            .back-to-app-btn {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                border: 1px solid #1a1a2e;
+                                background: #ffffff;
+                                color: #1a1a2e;
+                                border-radius: 8px;
+                                padding: 8px 12px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                cursor: pointer;
+                            }
                             @media print { 
                                 body { padding: 10px; }
                                 .section { page-break-inside: avoid; }
                                 h2 { page-break-after: avoid; }
+                                .export-nav { display: none !important; }
                             }
                         </style>
                     </head>
                     <body>
+                        <div class="export-nav">
+                            <button class="back-to-app-btn" type="button" onclick="returnToApp()">← Back to App</button>
+                        </div>
                         <div class="section">
                             <h1>
                                 🍜 ${dailyLogHeading}
@@ -2464,6 +2484,25 @@
                             <strong>${fsmsLogTitle} - ${this.currentLocation}</strong> - Confidential - Internal Use Only<br>
                             This document is part of the Food Safety Management System and must be retained for inspection purposes.
                         </p>
+                        <script>
+                            function returnToApp() {
+                                const fallbackUrl = document.referrer && document.referrer.startsWith('http')
+                                    ? document.referrer
+                                    : './index.html';
+
+                                window.close();
+
+                                setTimeout(() => {
+                                    if (!window.closed) {
+                                        if (window.history.length > 1) {
+                                            window.history.back();
+                                        } else {
+                                            window.location.href = fallbackUrl;
+                                        }
+                                    }
+                                }, 120);
+                            }
+                        <\/script>
                     </body>
                     </html>
                 `;
