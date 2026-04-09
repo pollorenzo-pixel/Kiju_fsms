@@ -1142,9 +1142,9 @@
                         title: 'Hot Holding Monitoring Log',
                         subtitle: 'Hot-held foods must be kept at or above 63°C. Check every 2 hours.',
                         items: [
-                            { name: 'Chicken Broth', temps: ['', '', '', '', '', ''] },
-                            { name: 'Tonkotsu Broth', temps: ['', '', '', '', '', ''] },
-                            { name: 'Veggie Broth', temps: ['', '', '', '', '', ''] }
+                            { name: 'Chicken Broth', temps: ['', '', '', '', '', ''], action: '' },
+                            { name: 'Tonkotsu Broth', temps: ['', '', '', '', '', ''], action: '' },
+                            { name: 'Veggie Broth', temps: ['', '', '', '', '', ''], action: '' }
                         ],
                         times: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
                         initials: ''
@@ -1153,8 +1153,8 @@
                         title: 'Cold Items Monitoring Log',
                         subtitle: 'Chilled foods must be stored at 5°C or below. Check at least twice daily.',
                         items: [
-                            { name: 'Chilled Noodles', temps: ['', '', '', '', '', ''] },
-                            { name: 'Prepared Vegetables', temps: ['', '', '', '', '', ''] }
+                            { name: 'Chilled Noodles', temps: ['', '', '', '', '', ''], action: '' },
+                            { name: 'Prepared Vegetables', temps: ['', '', '', '', '', ''], action: '' }
                         ],
                         times: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
                         initials: ''
@@ -1320,7 +1320,12 @@
 
             renderOpeningLog(data) {
                 return `
-                    <div class="log-header"><h2>🌅 ${data.title}</h2></div>
+                    <div class="log-header">
+                        <h2>🌅 ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.exportSectionPDF('opening')">Export PDF</button>
+                        </div>
+                    </div>
                     <div class="log-body">
                         <div class="form-row">
                             <div class="form-group">
@@ -1370,6 +1375,7 @@
                     <div class="log-header">
                         <h2>🌡️ ${data.title}</h2>
                         <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.exportSectionPDF('temp')">Export PDF</button>
                             <button class="btn-sm btn-light" onclick="app.addFridge()">+ Fridge</button>
                             <button class="btn-sm btn-light" onclick="app.addFreezer()">+ Freezer</button>
                         </div>
@@ -1458,6 +1464,13 @@
                                             `).join('')}
                                             <td><button class="btn-delete" onclick="app.removeHotColdItem('${type}', ${idx})">✕</button></td>
                                         </tr>
+                                        ${this.requiresHotColdAction(type, item) ? `
+                                            <tr>
+                                                <td colspan="${data.times.length + 2}" style="background: rgba(231, 76, 60, 0.08);">
+                                                    <input type="text" class="form-input" value="${item.action || ''}" placeholder="Corrective action required for out-of-range temperature..." onchange="app.updateHotColdAction('${type}', ${idx}, this.value)">
+                                                </td>
+                                            </tr>
+                                        ` : ''}
                                     `).join('')}
                                 </tbody>
                             </table>
@@ -1577,7 +1590,12 @@
 
             renderClosingLog(data) {
                 return `
-                    <div class="log-header"><h2>🌙 ${data.title}</h2></div>
+                    <div class="log-header">
+                        <h2>🌙 ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.exportSectionPDF('closing')">Export PDF</button>
+                        </div>
+                    </div>
                     <div class="log-body">
                         <div class="form-row">
                             <div class="form-group">
@@ -1612,6 +1630,121 @@
                         </div>
                     </div>
                 `;
+            }
+
+            // ==========================================
+            // COMPLIANCE VALIDATION
+            // ==========================================
+
+            hasValue(value) {
+                return value !== null && value !== undefined && String(value).trim() !== '';
+            }
+
+            requiresHotColdAction(type, item) {
+                const threshold = type === 'hot' ? 63 : 5;
+                return item.temps.some(temp => {
+                    if (!this.hasValue(temp)) return false;
+                    const numericTemp = parseFloat(temp);
+                    return type === 'hot' ? numericTemp < threshold : numericTemp > threshold;
+                });
+            }
+
+            validateOpeningLog() {
+                const allAnswered = this.data.opening.checks.every(check => check.yes || check.no);
+                const correctiveComplete = this.data.opening.checks.every(check => !check.no || this.hasValue(check.desc));
+                const staffComplete = this.hasValue(this.data.opening.staff.am) || this.hasValue(this.data.opening.staff.pm);
+                const signedNameComplete = this.hasValue(this.data.opening.signed.name);
+
+                if (allAnswered && correctiveComplete && staffComplete && signedNameComplete) {
+                    return { valid: true, message: '' };
+                }
+
+                return {
+                    valid: false,
+                    message: 'Opening Checks are incomplete. Please complete all required fields for compliance.'
+                };
+            }
+
+            validateClosingLog() {
+                const allAnswered = this.data.closing.checks.every(check => check.yes || check.no);
+                const correctiveComplete = this.data.closing.checks.every(check => !check.no || this.hasValue(check.desc));
+                const signedNameComplete = this.hasValue(this.data.closing.signed.name);
+
+                if (allAnswered && correctiveComplete && signedNameComplete) {
+                    return { valid: true, message: '' };
+                }
+
+                return {
+                    valid: false,
+                    message: 'Closing Checks are incomplete. Please complete all required fields for compliance.'
+                };
+            }
+
+            validateTempLog() {
+                const equipmentComplete = [...this.data.temp.fridges, ...this.data.temp.freezers]
+                    .every(item => this.hasValue(item.opening) && this.hasValue(item.check4pm) && this.hasValue(item.closing));
+                const initialsComplete = this.hasValue(this.data.temp.initials);
+
+                if (equipmentComplete && initialsComplete) {
+                    return { valid: true, message: '' };
+                }
+
+                return {
+                    valid: false,
+                    message: 'Temperature Log is incomplete. For compliance, all required temperature fields must be filled.'
+                };
+            }
+
+            validateHotHoldingLog() {
+                const complete = this.data.hot.items.every(item => {
+                    const allTempsComplete = item.temps.every(temp => this.hasValue(temp));
+                    const actionComplete = !this.requiresHotColdAction('hot', item) || this.hasValue(item.action);
+                    return allTempsComplete && actionComplete;
+                });
+
+                return {
+                    valid: complete,
+                    message: complete ? '' : 'This record is incomplete. Please fill all required fields for compliance.'
+                };
+            }
+
+            validateColdLog() {
+                const complete = this.data.cold.items.every(item => {
+                    const allTempsComplete = item.temps.every(temp => this.hasValue(temp));
+                    const actionComplete = !this.requiresHotColdAction('cold', item) || this.hasValue(item.action);
+                    return allTempsComplete && actionComplete;
+                });
+
+                return {
+                    valid: complete,
+                    message: complete ? '' : 'This record is incomplete. Please fill all required fields for compliance.'
+                };
+            }
+
+            validateCookingLog() {
+                const complete = this.data.cooking.items.every(item => {
+                    const fieldsComplete = this.hasValue(item.name) && this.hasValue(item.time) && this.hasValue(item.temp);
+                    const actionComplete = !this.hasValue(item.temp) || parseFloat(item.temp) >= 75 || this.hasValue(item.action);
+                    return fieldsComplete && actionComplete;
+                });
+
+                return {
+                    valid: complete,
+                    message: complete ? '' : 'This record is incomplete. Please fill all required fields for compliance.'
+                };
+            }
+
+            validateCurrentLog() {
+                const validators = {
+                    opening: () => this.validateOpeningLog(),
+                    closing: () => this.validateClosingLog(),
+                    temp: () => this.validateTempLog(),
+                    hot: () => this.validateHotHoldingLog(),
+                    cold: () => this.validateColdLog(),
+                    cooking: () => this.validateCookingLog()
+                };
+                const validate = validators[this.currentLog];
+                return validate ? validate() : { valid: true, message: '' };
             }
 
             // ==========================================
@@ -1681,7 +1814,7 @@
             }
 
             addHotColdItem(type) {
-                this.data[type].items.push({ name: 'New Item', temps: ['', '', '', '', '', ''] });
+                this.data[type].items.push({ name: 'New Item', temps: ['', '', '', '', '', ''], action: '' });
                 this.renderLog(type);
             }
 
@@ -1699,6 +1832,10 @@
             updateHotColdTemp(type, itemIdx, tempIdx, value) {
                 this.data[type].items[itemIdx].temps[tempIdx] = value;
                 this.renderLog(type);
+            }
+
+            updateHotColdAction(type, idx, value) {
+                this.data[type].items[idx].action = value;
             }
 
             addDeliveryEntry() {
@@ -1794,6 +1931,11 @@
             }
 
             saveCurrentLog() {
+                const validation = this.validateCurrentLog();
+                if (!validation.valid) {
+                    this.showToast(validation.message, 'error');
+                    return;
+                }
                 if (this.saveToStorage()) {
                     this.showToast(`Saved for ${this.currentLocation}` + (this.isOnline ? '' : ' (offline)'), 'success');
                 }
@@ -1879,14 +2021,46 @@
             // ==========================================
             // PDF EXPORT (Includes Location)
             // ==========================================
-            exportPDF() {
+            exportSectionPDF(sectionType) {
+                const validators = {
+                    opening: () => this.validateOpeningLog(),
+                    closing: () => this.validateClosingLog(),
+                    temp: () => this.validateTempLog()
+                };
+                const validate = validators[sectionType];
+                const validation = validate ? validate() : { valid: true, message: '' };
+
+                if (!validation.valid) {
+                    this.showToast(validation.message, 'error');
+                    return;
+                }
+
+                this.exportPDF(sectionType);
+            }
+
+            exportPDF(sectionType = null) {
+                const shouldValidateCurrent = !sectionType && ['opening', 'closing', 'temp', 'hot', 'cold', 'cooking'].includes(this.currentLog);
+                if (shouldValidateCurrent) {
+                    const validation = this.validateCurrentLog();
+                    if (!validation.valid) {
+                        this.showToast(validation.message, 'error');
+                        return;
+                    }
+                }
+
                 const printWindow = window.open('', '_blank');
                 const date = this.today();
+                const sectionTitles = {
+                    opening: 'Opening Checks',
+                    temp: 'Temperature Log',
+                    closing: 'Closing Checks'
+                };
+                const reportTitle = sectionType ? `${sectionTitles[sectionType]} - ${this.currentLocation}` : `Kiju FSMS Log - ${this.currentLocation}`;
                 
                 let html = `
                     <html>
                     <head>
-                        <title>Kiju FSMS Log - ${this.currentLocation} - ${date}</title>
+                        <title>${reportTitle} - ${date}</title>
                         <style>
                             @page { size: A4; margin: 15mm; }
                             body { 
@@ -1977,6 +2151,7 @@
                             </h1>
                             <div class="header-info">
                                 <strong>Date:</strong> ${date} | 
+                                ${sectionType ? `<strong>Section:</strong> ${sectionTitles[sectionType]} | ` : ''}
                                 <strong>Location:</strong> ${this.currentLocation} | 
                                 <strong>Generated:</strong> ${new Date().toLocaleString('en-GB')}
                             </div>
@@ -1986,7 +2161,7 @@
                 let hasData = false;
 
                 // 1. OPENING CHECKS
-                if (this.data.opening.checks.some(c => c.yes || c.no) || this.data.opening.signed.name) {
+                if ((!sectionType || sectionType === 'opening') && (this.data.opening.checks.some(c => c.yes || c.no) || this.data.opening.signed.name)) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2019,7 +2194,7 @@
                 const hasFridgeData = this.data.temp.fridges.some(f => f.opening || f.check4pm || f.closing);
                 const hasFreezerData = this.data.temp.freezers.some(f => f.opening || f.check4pm || f.closing);
                 
-                if (hasFridgeData || hasFreezerData) {
+                if ((!sectionType || sectionType === 'temp') && (hasFridgeData || hasFreezerData)) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2077,7 +2252,7 @@
 
                 // 3. HOT HOLDING LOG
                 const hasHotData = this.data.hot.items.some(i => i.temps.some(t => t !== ''));
-                if (hasHotData) {
+                if (!sectionType && hasHotData) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2102,6 +2277,9 @@
                             }
                         });
                         html += `</tr>`;
+                        if (item.action) {
+                            html += `<tr><td colspan="${this.data.hot.times.length + 1}" class="notes"><strong>Corrective Action:</strong> ${item.action}</td></tr>`;
+                        }
                     });
                     html += `
                                 </tbody>
@@ -2112,7 +2290,7 @@
 
                 // 4. COLD ITEMS LOG
                 const hasColdData = this.data.cold.items.some(i => i.temps.some(t => t !== ''));
-                if (hasColdData) {
+                if (!sectionType && hasColdData) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2137,6 +2315,9 @@
                             }
                         });
                         html += `</tr>`;
+                        if (item.action) {
+                            html += `<tr><td colspan="${this.data.cold.times.length + 1}" class="notes"><strong>Corrective Action:</strong> ${item.action}</td></tr>`;
+                        }
                     });
                     html += `
                                 </tbody>
@@ -2146,7 +2327,7 @@
                 }
 
                 // 5. DELIVERY LOG
-                if (this.data.delivery.entries.length > 0) {
+                if (!sectionType && this.data.delivery.entries.length > 0) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2177,7 +2358,7 @@
 
                 // 6. COOKING/REHEATING LOG
                 const hasCookingData = this.data.cooking.items.some(i => i.temp || i.time || i.name);
-                if (hasCookingData) {
+                if (!sectionType && hasCookingData) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2208,7 +2389,7 @@
                 }
 
                 // 7. CORRECTIVE ACTION LOG
-                if (this.data.corrective.entries.length > 0) {
+                if (!sectionType && this.data.corrective.entries.length > 0) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2238,7 +2419,7 @@
                 }
 
                 // 8. CLOSING CHECKS
-                if (this.data.closing.checks.some(c => c.yes || c.no) || this.data.closing.signed.name) {
+                if ((!sectionType || sectionType === 'closing') && (this.data.closing.checks.some(c => c.yes || c.no) || this.data.closing.signed.name)) {
                     hasData = true;
                     html += `
                         <div class="section">
@@ -2291,7 +2472,8 @@
                     printWindow.print();
                 }, 500);
                 
-                this.showToast('PDF export ready for ' + this.currentLocation, hasData ? 'success' : 'error');
+                const exportLabel = sectionType ? `${sectionTitles[sectionType]} PDF ready` : `PDF export ready for ${this.currentLocation}`;
+                this.showToast(exportLabel, hasData ? 'success' : 'error');
             }
         }
 
