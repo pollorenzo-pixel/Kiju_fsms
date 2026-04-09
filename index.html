@@ -990,6 +990,7 @@
     <script>
         class YumeFSMS {
             constructor() {
+                this.brandName = 'Kiju';
                 this.currentLog = 'opening';
                 this.currentLocation = 'Battersea';
                 this.locations = ['Battersea', 'Shoreditch', 'Camden', 'Test Kitchen'];
@@ -2055,7 +2056,9 @@
                     temp: 'Temperature Log',
                     closing: 'Closing Checks'
                 };
-                const reportTitle = sectionType ? `${sectionTitles[sectionType]} - ${this.currentLocation}` : `Kiju FSMS Log - ${this.currentLocation}`;
+                const fsmsLogTitle = `${this.brandName} FSMS Log`;
+                const dailyLogHeading = `${this.brandName.toUpperCase()} - FSMS Daily Log`;
+                const reportTitle = sectionType ? `${fsmsLogTitle} - ${sectionTitles[sectionType]} - ${this.currentLocation}` : `${fsmsLogTitle} - ${this.currentLocation}`;
                 
                 let html = `
                     <html>
@@ -2146,7 +2149,7 @@
                     <body>
                         <div class="section">
                             <h1>
-                                🍜 YŪME RAMEN - FSMS Daily Log
+                                🍜 ${dailyLogHeading}
                                 <span class="location-badge">📍 ${this.currentLocation}</span>
                             </h1>
                             <div class="header-info">
@@ -2458,7 +2461,7 @@
                 html += `
                         <hr style="margin-top: 30px; border: none; border-top: 2px solid #e94560;">
                         <p style="font-size: 9px; color: #666; margin-top: 20px; text-align: center;">
-                            <strong>Kiju Battersea FSMS Log - ${this.currentLocation}</strong> - Confidential - Internal Use Only<br>
+                            <strong>${fsmsLogTitle} - ${this.currentLocation}</strong> - Confidential - Internal Use Only<br>
                             This document is part of the Food Safety Management System and must be retained for inspection purposes.
                         </p>
                     </body>
