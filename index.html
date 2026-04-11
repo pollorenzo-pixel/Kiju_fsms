@@ -1108,6 +1108,7 @@
             }
 
             initializeData() {
+                const serviceTimes = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
                 return {
                     opening: {
                         title: 'Daily Opening Checklist',
@@ -1128,13 +1129,13 @@
                     temp: {
                         title: 'Fridge/Freezer Temperature Log',
                         fridges: [
-                            { name: 'Walk-in Fridge #1', opening: '', check4pm: '', closing: '' },
-                            { name: 'Prep Fridge #2', opening: '', check4pm: '', closing: '' },
-                            { name: 'Prep Fridge #3', opening: '', check4pm: '', closing: '' }
+                            { name: 'Walk-in Fridge #1', t12: '', t16: '', t20: '' },
+                            { name: 'Prep Fridge #2', t12: '', t16: '', t20: '' },
+                            { name: 'Prep Fridge #3', t12: '', t16: '', t20: '' }
                         ],
                         freezers: [
-                            { name: 'Freezer #1', opening: '', check4pm: '', closing: '' },
-                            { name: 'Freezer #2', opening: '', check4pm: '', closing: '' }
+                            { name: 'Freezer #1', t12: '', t16: '', t20: '' },
+                            { name: 'Freezer #2', t12: '', t16: '', t20: '' }
                         ],
                         notes: '',
                         initials: ''
@@ -1147,7 +1148,7 @@
                             { name: 'Tonkotsu Broth', temps: ['', '', '', '', '', ''], action: '' },
                             { name: 'Veggie Broth', temps: ['', '', '', '', '', ''], action: '' }
                         ],
-                        times: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                        times: serviceTimes,
                         initials: ''
                     },
                     cold: {
@@ -1157,7 +1158,7 @@
                             { name: 'Chilled Noodles', temps: ['', '', '', '', '', ''], action: '' },
                             { name: 'Prepared Vegetables', temps: ['', '', '', '', '', ''], action: '' }
                         ],
-                        times: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                        times: serviceTimes,
                         initials: ''
                     },
                     delivery: {
@@ -1398,24 +1399,24 @@
                         <div class="temp-grid">
                             <table class="temp-table">
                                 <thead>
-                                    <tr><th>Equipment</th><th>Opening</th><th>4pm</th><th>Closing</th><th></th></tr>
+                                    <tr><th>Equipment</th><th>12:00</th><th>16:00</th><th>20:00</th><th></th></tr>
                                 </thead>
                                 <tbody>
                                     ${data.fridges.map((fridge, idx) => `
                                         <tr>
                                             <td><strong>${fridge.name}</strong></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.opening, 'fridge')}" value="${fridge.opening}" onchange="app.updateTemp('fridges', ${idx}, 'opening', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.check4pm, 'fridge')}" value="${fridge.check4pm}" onchange="app.updateTemp('fridges', ${idx}, 'check4pm', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.closing, 'fridge')}" value="${fridge.closing}" onchange="app.updateTemp('fridges', ${idx}, 'closing', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.t12, 'fridge')}" value="${fridge.t12}" onchange="app.updateTemp('fridges', ${idx}, 't12', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.t16, 'fridge')}" value="${fridge.t16}" onchange="app.updateTemp('fridges', ${idx}, 't16', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.t20, 'fridge')}" value="${fridge.t20}" onchange="app.updateTemp('fridges', ${idx}, 't20', this.value)" placeholder="°C"></td>
                                             <td><button class="btn-delete" onclick="app.removeEquipment('fridges', ${idx})">✕</button></td>
                                         </tr>
                                     `).join('')}
                                     ${data.freezers.map((freezer, idx) => `
                                         <tr style="background: rgba(52, 152, 219, 0.05);">
                                             <td><strong>${freezer.name}</strong></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.opening, 'freezer')}" value="${freezer.opening}" onchange="app.updateTemp('freezers', ${idx}, 'opening', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.check4pm, 'freezer')}" value="${freezer.check4pm}" onchange="app.updateTemp('freezers', ${idx}, 'check4pm', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.closing, 'freezer')}" value="${freezer.closing}" onchange="app.updateTemp('freezers', ${idx}, 'closing', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.t12, 'freezer')}" value="${freezer.t12}" onchange="app.updateTemp('freezers', ${idx}, 't12', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.t16, 'freezer')}" value="${freezer.t16}" onchange="app.updateTemp('freezers', ${idx}, 't16', this.value)" placeholder="°C"></td>
+                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.t20, 'freezer')}" value="${freezer.t20}" onchange="app.updateTemp('freezers', ${idx}, 't20', this.value)" placeholder="°C"></td>
                                             <td><button class="btn-delete" onclick="app.removeEquipment('freezers', ${idx})">✕</button></td>
                                         </tr>
                                     `).join('')}
@@ -1683,7 +1684,7 @@
 
             validateTempLog() {
                 const equipmentComplete = [...this.data.temp.fridges, ...this.data.temp.freezers]
-                    .every(item => this.hasValue(item.opening) && this.hasValue(item.check4pm) && this.hasValue(item.closing));
+                    .every(item => this.hasValue(item.t12) && this.hasValue(item.t16) && this.hasValue(item.t20));
                 const initialsComplete = this.hasValue(this.data.temp.initials);
 
                 if (equipmentComplete && initialsComplete) {
@@ -1692,7 +1693,7 @@
 
                 return {
                     valid: false,
-                    message: 'Temperature Log is incomplete. For compliance, all required temperature fields must be filled.'
+                    message: 'This record is incomplete. Please fill all required fields for compliance.'
                 };
             }
 
@@ -1797,13 +1798,13 @@
 
             addFridge() {
                 const num = this.data.temp.fridges.length + 1;
-                this.data.temp.fridges.push({ name: `Fridge #${num}`, opening: '', check4pm: '', closing: '' });
+                this.data.temp.fridges.push({ name: `Fridge #${num}`, t12: '', t16: '', t20: '' });
                 this.renderLog('temp');
             }
 
             addFreezer() {
                 const num = this.data.temp.freezers.length + 1;
-                this.data.temp.freezers.push({ name: `Freezer #${num}`, opening: '', check4pm: '', closing: '' });
+                this.data.temp.freezers.push({ name: `Freezer #${num}`, t12: '', t16: '', t20: '' });
                 this.renderLog('temp');
             }
 
@@ -1815,7 +1816,7 @@
             }
 
             addHotColdItem(type) {
-                this.data[type].items.push({ name: 'New Item', temps: ['', '', '', '', '', ''], action: '' });
+                this.data[type].items.push({ name: 'New Item', temps: this.data[type].times.map(() => ''), action: '' });
                 this.renderLog(type);
             }
 
@@ -1916,13 +1917,60 @@
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
-                        this.data = { ...this.initializeData(), ...parsed };
+                        this.data = this.normalizeLoadedData(parsed);
                     } catch (e) {
                         this.data = this.initializeData();
                     }
                 } else {
                     this.data = this.initializeData();
                 }
+            }
+
+            normalizeLoadedData(parsed) {
+                const defaults = this.initializeData();
+                const merged = { ...defaults, ...parsed };
+
+                const serviceTimes = defaults.hot.times;
+                const alignTemps = (items = []) =>
+                    items.map(item => {
+                        const temps = Array.isArray(item.temps) ? item.temps.slice(0, serviceTimes.length) : [];
+                        while (temps.length < serviceTimes.length) temps.push('');
+                        return { ...item, temps };
+                    });
+
+                merged.hot = {
+                    ...defaults.hot,
+                    ...(parsed.hot || {}),
+                    times: serviceTimes,
+                    items: alignTemps((parsed.hot && Array.isArray(parsed.hot.items)) ? parsed.hot.items : defaults.hot.items)
+                };
+
+                merged.cold = {
+                    ...defaults.cold,
+                    ...(parsed.cold || {}),
+                    times: serviceTimes,
+                    items: alignTemps((parsed.cold && Array.isArray(parsed.cold.items)) ? parsed.cold.items : defaults.cold.items)
+                };
+
+                const mapTempItem = (item, fallbackName) => ({
+                    name: item?.name || fallbackName,
+                    t12: item?.t12 ?? item?.opening ?? '',
+                    t16: item?.t16 ?? item?.check4pm ?? '',
+                    t20: item?.t20 ?? item?.closing ?? ''
+                });
+
+                merged.temp = {
+                    ...defaults.temp,
+                    ...(parsed.temp || {}),
+                    fridges: (parsed.temp?.fridges || defaults.temp.fridges).map((item, idx) =>
+                        mapTempItem(item, defaults.temp.fridges[idx]?.name || `Fridge #${idx + 1}`)
+                    ),
+                    freezers: (parsed.temp?.freezers || defaults.temp.freezers).map((item, idx) =>
+                        mapTempItem(item, defaults.temp.freezers[idx]?.name || `Freezer #${idx + 1}`)
+                    )
+                };
+
+                return merged;
             }
 
             showSyncStatus() {
@@ -2214,8 +2262,8 @@
                 }
 
                 // 2. TEMPERATURE LOG
-                const hasFridgeData = this.data.temp.fridges.some(f => f.opening || f.check4pm || f.closing);
-                const hasFreezerData = this.data.temp.freezers.some(f => f.opening || f.check4pm || f.closing);
+                const hasFridgeData = this.data.temp.fridges.some(f => f.t12 || f.t16 || f.t20);
+                const hasFreezerData = this.data.temp.freezers.some(f => f.t12 || f.t16 || f.t20);
                 
                 if ((!sectionType || sectionType === 'temp') && (hasFridgeData || hasFreezerData)) {
                     hasData = true;
@@ -2226,7 +2274,7 @@
                                <em>Fridges: 1-5°C | Freezers: ≤-18°C</em></p>
                             <table>
                                 <thead>
-                                    <tr><th>Equipment</th><th>Opening</th><th>4pm Check</th><th>Closing</th></tr>
+                                    <tr><th>Equipment</th><th>12:00</th><th>16:00</th><th>20:00</th></tr>
                                 </thead>
                                 <tbody>
                     `;
@@ -2240,9 +2288,9 @@
                         html += `
                             <tr>
                                 <td><strong>${item.name}</strong></td>
-                                <td class="${getClass(item.opening)}">${item.opening ? item.opening + '°C' : '-'}</td>
-                                <td class="${getClass(item.check4pm)}">${item.check4pm ? item.check4pm + '°C' : '-'}</td>
-                                <td class="${getClass(item.closing)}">${item.closing ? item.closing + '°C' : '-'}</td>
+                                <td class="${getClass(item.t12)}">${item.t12 ? item.t12 + '°C' : '-'}</td>
+                                <td class="${getClass(item.t16)}">${item.t16 ? item.t16 + '°C' : '-'}</td>
+                                <td class="${getClass(item.t20)}">${item.t20 ? item.t20 + '°C' : '-'}</td>
                             </tr>
                         `;
                     });
@@ -2256,9 +2304,9 @@
                         html += `
                             <tr style="background: rgba(52, 152, 219, 0.05);">
                                 <td><strong>${item.name}</strong></td>
-                                <td class="${getClass(item.opening)}">${item.opening ? item.opening + '°C' : '-'}</td>
-                                <td class="${getClass(item.check4pm)}">${item.check4pm ? item.check4pm + '°C' : '-'}</td>
-                                <td class="${getClass(item.closing)}">${item.closing ? item.closing + '°C' : '-'}</td>
+                                <td class="${getClass(item.t12)}">${item.t12 ? item.t12 + '°C' : '-'}</td>
+                                <td class="${getClass(item.t16)}">${item.t16 ? item.t16 + '°C' : '-'}</td>
+                                <td class="${getClass(item.t20)}">${item.t20 ? item.t20 + '°C' : '-'}</td>
                             </tr>
                         `;
                     });
