@@ -2000,6 +2000,77 @@
                 }
             }
 
+            resetDailyValuesPreserveStructure() {
+                const clearChecklist = (checks = []) => checks.map(check => ({
+                    ...check,
+                    yes: false,
+                    no: false,
+                    desc: ''
+                }));
+                const clearTempEquipment = (items = []) => items.map(item => ({
+                    ...item,
+                    t12: '',
+                    t16: '',
+                    t20: ''
+                }));
+                const clearHotColdItems = (items = [], times = []) => items.map(item => ({
+                    ...item,
+                    temps: times.map(() => ''),
+                    action: ''
+                }));
+
+                this.data = {
+                    ...this.data,
+                    opening: {
+                        ...this.data.opening,
+                        staff: { am: '', pm: '' },
+                        checks: clearChecklist(this.data.opening?.checks),
+                        signed: { name: '', signature: '' }
+                    },
+                    temp: {
+                        ...this.data.temp,
+                        fridges: clearTempEquipment(this.data.temp?.fridges),
+                        freezers: clearTempEquipment(this.data.temp?.freezers),
+                        notes: '',
+                        initials: ''
+                    },
+                    hot: {
+                        ...this.data.hot,
+                        items: clearHotColdItems(this.data.hot?.items, this.data.hot?.times || []),
+                        initials: ''
+                    },
+                    cold: {
+                        ...this.data.cold,
+                        items: clearHotColdItems(this.data.cold?.items, this.data.cold?.times || []),
+                        initials: ''
+                    },
+                    delivery: {
+                        ...this.data.delivery,
+                        entries: []
+                    },
+                    cooking: {
+                        ...this.data.cooking,
+                        items: (this.data.cooking?.items || []).map(item => ({
+                            ...item,
+                            time: '',
+                            temp: '',
+                            action: ''
+                        }))
+                    },
+                    corrective: {
+                        ...this.data.corrective,
+                        entries: []
+                    },
+                    closing: {
+                        ...this.data.closing,
+                        checks: clearChecklist(this.data.closing?.checks),
+                        signed: { name: '', signature: '' }
+                    }
+                };
+
+                return this.saveToStorage();
+            }
+
             clearAllData() {
                 if (confirm(`⚠️ Delete ALL data for ${this.currentLocation} permanently?`)) {
                     localStorage.removeItem(this.getStorageKey());
@@ -2099,6 +2170,10 @@
                 }
 
                 const printWindow = window.open('', '_blank');
+                if (!printWindow) {
+                    this.showToast('Unable to open export window. Please allow pop-ups and try again.', 'error');
+                    return;
+                }
                 const date = this.today();
                 const sectionTitles = {
                     opening: 'Opening Checks',
@@ -2561,10 +2636,21 @@
                 
                 setTimeout(() => {
                     printWindow.print();
+
+                    if (!sectionType) {
+                        const saved = this.resetDailyValuesPreserveStructure();
+                        this.renderLog(this.currentLog);
+                        if (saved) {
+                            this.showToast('Final PDF exported. Daily logs reset for next service.', 'success');
+                        } else {
+                            this.showToast('PDF exported but daily reset could not be saved.', 'error');
+                        }
+                        return;
+                    }
+
+                    const exportLabel = `${sectionTitles[sectionType]} PDF ready`;
+                    this.showToast(exportLabel, hasData ? 'success' : 'error');
                 }, 500);
-                
-                const exportLabel = sectionType ? `${sectionTitles[sectionType]} PDF ready` : `PDF export ready for ${this.currentLocation}`;
-                this.showToast(exportLabel, hasData ? 'success' : 'error');
             }
         }
 
