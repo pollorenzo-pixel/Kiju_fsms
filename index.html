@@ -695,6 +695,48 @@
             border-radius: 12px;
         }
 
+        .item-secondary {
+            margin-top: 8px;
+            padding: 12px;
+            background: rgba(52, 152, 219, 0.06);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+            border-radius: 10px;
+        }
+
+        .item-secondary summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text);
+            list-style: none;
+        }
+
+        .item-secondary summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .item-secondary summary::before {
+            content: '▸';
+            margin-right: 8px;
+            color: var(--info);
+        }
+
+        .item-secondary[open] summary::before {
+            content: '▾';
+        }
+
+        .cooling-note {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        .cooling-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
         .btn-delete {
             width: 32px;
             height: 32px;
@@ -855,6 +897,12 @@
             .main-content {
                 max-width: 1200px;
                 margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .cooling-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -1180,9 +1228,9 @@
                         title: 'Cooking & Reheating Temperature Log',
                         subtitle: 'All cooked and reheated food must reach core temperature of at least 75°C.',
                         items: [
-                            { name: 'Chicken Broth', time: '', temp: '', action: '' },
-                            { name: 'Tonkotsu Broth', time: '', temp: '', action: '' },
-                            { name: 'Veggie Broth', time: '', temp: '', action: '' }
+                            { name: 'Chicken Broth', time: '', temp: '', action: '', coolingStartTime: '', coolingStartTemp: '', coolingEndTime: '', coolingEndTemp: '' },
+                            { name: 'Tonkotsu Broth', time: '', temp: '', action: '', coolingStartTime: '', coolingStartTemp: '', coolingEndTime: '', coolingEndTemp: '' },
+                            { name: 'Veggie Broth', time: '', temp: '', action: '', coolingStartTime: '', coolingStartTemp: '', coolingEndTime: '', coolingEndTemp: '' }
                         ]
                     },
                     corrective: {
@@ -1555,6 +1603,16 @@
                                         </div>
                                         <button class="btn-delete" onclick="app.removeCookingItem(${idx})">✕</button>
                                     </div>
+                                    <details class="item-secondary">
+                                        <summary>Optional Cooling Record (broth cooling)</summary>
+                                        <p class="cooling-note">Use only if item was cooled. Leave blank if not applicable. Cooling should follow your food safety procedure.</p>
+                                        <div class="cooling-grid">
+                                            <input type="time" class="form-input" value="${item.coolingStartTime || ''}" onchange="app.updateCookingItem(${idx}, 'coolingStartTime', this.value)" title="Cool Start Time" placeholder="Cool Start Time">
+                                            <input type="number" class="temp-input-cell ${item.coolingStartTemp ? 'safe' : ''}" value="${item.coolingStartTemp || ''}" onchange="app.updateCookingItem(${idx}, 'coolingStartTemp', this.value)" title="Cool Start Temp" placeholder="Cool Start Temp (°C)">
+                                            <input type="time" class="form-input" value="${item.coolingEndTime || ''}" onchange="app.updateCookingItem(${idx}, 'coolingEndTime', this.value)" title="Cool End Time" placeholder="Cool End Time">
+                                            <input type="number" class="temp-input-cell ${item.coolingEndTemp ? 'safe' : ''}" value="${item.coolingEndTemp || ''}" onchange="app.updateCookingItem(${idx}, 'coolingEndTemp', this.value)" title="Cool End Temp" placeholder="Cool End Temp (°C)">
+                                        </div>
+                                    </details>
                                     ${item.temp && item.temp < 75 ? `
                                         <div style="margin-top: 8px; padding: 12px; background: rgba(231, 76, 60, 0.1); border-radius: 8px; border-left: 3px solid var(--accent);">
                                             <input type="text" class="form-input" value="${item.action}" placeholder="Corrective action taken..." onchange="app.updateCookingItem(${idx}, 'action', this.value)" style="border: none; background: transparent;">
@@ -1740,8 +1798,28 @@
                 const complete = this.data.cooking.items.every(item => {
                     const fieldsComplete = this.hasValue(item.name) && this.hasValue(item.time) && this.hasValue(item.temp);
                     const actionComplete = !this.hasValue(item.temp) || parseFloat(item.temp) >= 75 || this.hasValue(item.action);
-                    return fieldsComplete && actionComplete;
+                    const coolingFields = ['coolingStartTime', 'coolingStartTemp', 'coolingEndTime', 'coolingEndTemp'];
+                    const hasAnyCoolingField = coolingFields.some(field => this.hasValue(item[field]));
+                    const hasAllCoolingFields = coolingFields.every(field => this.hasValue(item[field]));
+                    const coolingComplete = !hasAnyCoolingField || hasAllCoolingFields;
+                    return fieldsComplete && actionComplete && coolingComplete;
                 });
+
+                if (!complete) {
+                    const hasIncompleteCooling = this.data.cooking.items.some(item => {
+                        const coolingFields = ['coolingStartTime', 'coolingStartTemp', 'coolingEndTime', 'coolingEndTemp'];
+                        const hasAnyCoolingField = coolingFields.some(field => this.hasValue(item[field]));
+                        const hasAllCoolingFields = coolingFields.every(field => this.hasValue(item[field]));
+                        return hasAnyCoolingField && !hasAllCoolingFields;
+                    });
+
+                    if (hasIncompleteCooling) {
+                        return {
+                            valid: false,
+                            message: 'Cooling record is incomplete. Please complete all cooling fields or leave them all blank.'
+                        };
+                    }
+                }
 
                 return {
                     valid: complete,
@@ -1880,7 +1958,16 @@
             }
 
             addCookingItem() {
-                this.data.cooking.items.push({ name: '', time: '', temp: '', action: '' });
+                this.data.cooking.items.push({
+                    name: '',
+                    time: '',
+                    temp: '',
+                    action: '',
+                    coolingStartTime: '',
+                    coolingStartTemp: '',
+                    coolingEndTime: '',
+                    coolingEndTemp: ''
+                });
                 this.renderLog('cooking');
             }
 
@@ -1999,6 +2086,21 @@
                     )
                 };
 
+                merged.cooking = {
+                    ...defaults.cooking,
+                    ...(parsed.cooking || {}),
+                    items: (Array.isArray(parsed.cooking?.items) ? parsed.cooking.items : defaults.cooking.items).map(item => ({
+                        name: item?.name || '',
+                        time: item?.time || '',
+                        temp: item?.temp || '',
+                        action: item?.action || '',
+                        coolingStartTime: item?.coolingStartTime || '',
+                        coolingStartTemp: item?.coolingStartTemp || '',
+                        coolingEndTime: item?.coolingEndTime || '',
+                        coolingEndTemp: item?.coolingEndTemp || ''
+                    }))
+                };
+
                 return merged;
             }
 
@@ -2080,7 +2182,11 @@
                             ...item,
                             time: '',
                             temp: '',
-                            action: ''
+                            action: '',
+                            coolingStartTime: '',
+                            coolingStartTemp: '',
+                            coolingEndTime: '',
+                            coolingEndTemp: ''
                         }))
                     },
                     corrective: {
@@ -2542,6 +2648,7 @@
                     `;
                     this.data.cooking.items.forEach(item => {
                         const tempClass = item.temp && parseFloat(item.temp) < 75 ? 'unsafe' : item.temp ? 'safe' : '';
+                        const hasCoolingData = this.hasValue(item.coolingStartTime) || this.hasValue(item.coolingStartTemp) || this.hasValue(item.coolingEndTime) || this.hasValue(item.coolingEndTemp);
                         html += `
                             <tr>
                                 <td><strong>${item.name || '-'}</strong></td>
@@ -2550,6 +2657,18 @@
                                 <td class="notes">${item.action || (item.temp && parseFloat(item.temp) < 75 ? '<span class="unsafe">Below 75°C - action required</span>' : '')}</td>
                             </tr>
                         `;
+                        if (hasCoolingData) {
+                            html += `
+                                <tr>
+                                    <td colspan="4" class="notes">
+                                        <strong>Cooling:</strong>
+                                        Start ${item.coolingStartTime || '-'} (${item.coolingStartTemp ? item.coolingStartTemp + '°C' : '-'})
+                                        &nbsp;|&nbsp;
+                                        End ${item.coolingEndTime || '-'} (${item.coolingEndTemp ? item.coolingEndTemp + '°C' : '-'})
+                                    </td>
+                                </tr>
+                            `;
+                        }
                     });
                     html += `
                                 </tbody>
