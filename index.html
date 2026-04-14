@@ -1009,6 +1009,11 @@
                     <div class="log-title">Cooking/Reheat</div>
                     <div class="log-status">≥75°C core temp</div>
                 </div>
+                <div class="log-card" onclick="app.selectLog('cooling')">
+                    <div class="log-icon cold">🧊</div>
+                    <div class="log-title">Cooling Log</div>
+                    <div class="log-status">Broth cooling records</div>
+                </div>
                 <div class="log-card" onclick="app.selectLog('corrective')">
                     <div class="log-icon corrective">📝</div>
                     <div class="log-title">Corrective Log</div>
@@ -1228,9 +1233,19 @@
                         title: 'Cooking & Reheating Temperature Log',
                         subtitle: 'All cooked and reheated food must reach core temperature of at least 75°C.',
                         items: [
-                            { name: 'Chicken Broth', time: '', temp: '', action: '', coolingStartTime: '', coolingStartTemp: '', coolingEndTime: '', coolingEndTemp: '' },
-                            { name: 'Tonkotsu Broth', time: '', temp: '', action: '', coolingStartTime: '', coolingStartTemp: '', coolingEndTime: '', coolingEndTemp: '' },
-                            { name: 'Veggie Broth', time: '', temp: '', action: '', coolingStartTime: '', coolingStartTemp: '', coolingEndTime: '', coolingEndTemp: '' }
+                            { name: 'Chicken Broth', time: '', temp: '', action: '' },
+                            { name: 'Tonkotsu Broth', time: '', temp: '', action: '' },
+                            { name: 'Veggie Broth', time: '', temp: '', action: '' }
+                        ]
+                    },
+                    cooling: {
+                        title: 'Cooling Log',
+                        subtitle: 'Use for broth or cooked items that are being cooled.',
+                        initials: '',
+                        items: [
+                            { name: 'Chicken Broth', startTime: '', startTemp: '', endTime: '', endTemp: '', notes: '' },
+                            { name: 'Tonkotsu Broth', startTime: '', startTemp: '', endTime: '', endTemp: '', notes: '' },
+                            { name: 'Veggie Broth', startTime: '', startTemp: '', endTime: '', endTemp: '', notes: '' }
                         ]
                     },
                     corrective: {
@@ -1369,6 +1384,9 @@
                         break;
                     case 'cooking':
                         container.innerHTML = this.renderCookingLog(data);
+                        break;
+                    case 'cooling':
+                        container.innerHTML = this.renderCoolingLog(data);
                         break;
                     case 'corrective':
                         container.innerHTML = this.renderCorrectiveLog(data);
@@ -1603,16 +1621,6 @@
                                         </div>
                                         <button class="btn-delete" onclick="app.removeCookingItem(${idx})">✕</button>
                                     </div>
-                                    <details class="item-secondary">
-                                        <summary>Optional Cooling Record (broth cooling)</summary>
-                                        <p class="cooling-note">Use only if item was cooled. Leave blank if not applicable. Cooling should follow your food safety procedure.</p>
-                                        <div class="cooling-grid">
-                                            <input type="time" class="form-input" value="${item.coolingStartTime || ''}" onchange="app.updateCookingItem(${idx}, 'coolingStartTime', this.value)" title="Cool Start Time" placeholder="Cool Start Time">
-                                            <input type="number" class="temp-input-cell ${item.coolingStartTemp ? 'safe' : ''}" value="${item.coolingStartTemp || ''}" onchange="app.updateCookingItem(${idx}, 'coolingStartTemp', this.value)" title="Cool Start Temp" placeholder="Cool Start Temp (°C)">
-                                            <input type="time" class="form-input" value="${item.coolingEndTime || ''}" onchange="app.updateCookingItem(${idx}, 'coolingEndTime', this.value)" title="Cool End Time" placeholder="Cool End Time">
-                                            <input type="number" class="temp-input-cell ${item.coolingEndTemp ? 'safe' : ''}" value="${item.coolingEndTemp || ''}" onchange="app.updateCookingItem(${idx}, 'coolingEndTemp', this.value)" title="Cool End Temp" placeholder="Cool End Temp (°C)">
-                                        </div>
-                                    </details>
                                     ${item.temp && item.temp < 75 ? `
                                         <div style="margin-top: 8px; padding: 12px; background: rgba(231, 76, 60, 0.1); border-radius: 8px; border-left: 3px solid var(--accent);">
                                             <input type="text" class="form-input" value="${item.action}" placeholder="Corrective action taken..." onchange="app.updateCookingItem(${idx}, 'action', this.value)" style="border: none; background: transparent;">
@@ -1622,6 +1630,51 @@
                             `).join('')}
                         </div>
                         <button class="btn-add" onclick="app.addCookingItem()"><span>+</span> Add Item</button>
+                    </div>
+                `;
+            }
+
+            renderCoolingLog(data) {
+                return `
+                    <div class="log-header">
+                        <h2>🧊 ${data.title}</h2>
+                        <div class="log-actions">
+                            <button class="btn-sm btn-light" onclick="app.addCoolingItem()">+ Item</button>
+                        </div>
+                    </div>
+                    <div class="log-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" value="${this.today()}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Staff Initials</label>
+                                <input type="text" class="form-input" placeholder="Staff initials" value="${data.initials || ''}" onchange="app.data.cooling.initials = this.value">
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 16px; color: var(--text-light); font-size: 14px;">${data.subtitle}</p>
+                        <div class="temp-grid">
+                            <table class="temp-table">
+                                <thead>
+                                    <tr><th>Item</th><th>Start Time</th><th>Start Temp</th><th>End Time</th><th>End Temp</th><th>Notes / Corrective Action</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${data.items.map((item, idx) => `
+                                        <tr>
+                                            <td><input type="text" class="form-input" value="${item.name || ''}" placeholder="Item name" onchange="app.updateCoolingItem(${idx}, 'name', this.value)"></td>
+                                            <td><input type="time" class="form-input" value="${item.startTime || ''}" onchange="app.updateCoolingItem(${idx}, 'startTime', this.value)"></td>
+                                            <td><input type="number" class="temp-input-cell" value="${item.startTemp || ''}" placeholder="°C" onchange="app.updateCoolingItem(${idx}, 'startTemp', this.value)"></td>
+                                            <td><input type="time" class="form-input" value="${item.endTime || ''}" onchange="app.updateCoolingItem(${idx}, 'endTime', this.value)"></td>
+                                            <td><input type="number" class="temp-input-cell" value="${item.endTemp || ''}" placeholder="°C" onchange="app.updateCoolingItem(${idx}, 'endTemp', this.value)"></td>
+                                            <td><input type="text" class="form-input" value="${item.notes || ''}" placeholder="Optional notes" onchange="app.updateCoolingItem(${idx}, 'notes', this.value)"></td>
+                                            <td><button class="btn-delete" onclick="app.removeCoolingItem(${idx})">✕</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn-add" onclick="app.addCoolingItem()"><span>+</span> Add Item</button>
                     </div>
                 `;
             }
@@ -1798,33 +1851,31 @@
                 const complete = this.data.cooking.items.every(item => {
                     const fieldsComplete = this.hasValue(item.name) && this.hasValue(item.time) && this.hasValue(item.temp);
                     const actionComplete = !this.hasValue(item.temp) || parseFloat(item.temp) >= 75 || this.hasValue(item.action);
-                    const coolingFields = ['coolingStartTime', 'coolingStartTemp', 'coolingEndTime', 'coolingEndTemp'];
-                    const hasAnyCoolingField = coolingFields.some(field => this.hasValue(item[field]));
-                    const hasAllCoolingFields = coolingFields.every(field => this.hasValue(item[field]));
-                    const coolingComplete = !hasAnyCoolingField || hasAllCoolingFields;
-                    return fieldsComplete && actionComplete && coolingComplete;
+                    return fieldsComplete && actionComplete;
                 });
-
-                if (!complete) {
-                    const hasIncompleteCooling = this.data.cooking.items.some(item => {
-                        const coolingFields = ['coolingStartTime', 'coolingStartTemp', 'coolingEndTime', 'coolingEndTemp'];
-                        const hasAnyCoolingField = coolingFields.some(field => this.hasValue(item[field]));
-                        const hasAllCoolingFields = coolingFields.every(field => this.hasValue(item[field]));
-                        return hasAnyCoolingField && !hasAllCoolingFields;
-                    });
-
-                    if (hasIncompleteCooling) {
-                        return {
-                            valid: false,
-                            message: 'Cooling record is incomplete. Please complete all cooling fields or leave them all blank.'
-                        };
-                    }
-                }
 
                 return {
                     valid: complete,
                     message: complete ? '' : 'This record is incomplete. Please fill all required fields for compliance.'
                 };
+            }
+
+            validateCoolingLog() {
+                const requiredFields = ['name', 'startTime', 'startTemp', 'endTime', 'endTemp'];
+                const hasIncompleteRow = this.data.cooling.items.some(item => {
+                    const hasAnyRequired = requiredFields.some(field => this.hasValue(item[field]));
+                    const hasAllRequired = requiredFields.every(field => this.hasValue(item[field]));
+                    return hasAnyRequired && !hasAllRequired;
+                });
+
+                if (hasIncompleteRow) {
+                    return {
+                        valid: false,
+                        message: 'Cooling Log is incomplete. Please complete all required cooling fields or remove the unused row.'
+                    };
+                }
+
+                return { valid: true, message: '' };
             }
 
             validateCurrentLog() {
@@ -1834,7 +1885,8 @@
                     temp: () => this.validateTempLog(),
                     hot: () => this.validateHotHoldingLog(),
                     cold: () => this.validateColdLog(),
-                    cooking: () => this.validateCookingLog()
+                    cooking: () => this.validateCookingLog(),
+                    cooling: () => this.validateCoolingLog()
                 };
                 const validate = validators[this.currentLog];
                 return validate ? validate() : { valid: true, message: '' };
@@ -1962,11 +2014,7 @@
                     name: '',
                     time: '',
                     temp: '',
-                    action: '',
-                    coolingStartTime: '',
-                    coolingStartTemp: '',
-                    coolingEndTime: '',
-                    coolingEndTemp: ''
+                    action: ''
                 });
                 this.renderLog('cooking');
             }
@@ -1980,6 +2028,29 @@
                 if (confirm('Remove this item?')) {
                     this.data.cooking.items.splice(idx, 1);
                     this.renderLog('cooking');
+                }
+            }
+
+            addCoolingItem() {
+                this.data.cooling.items.push({
+                    name: '',
+                    startTime: '',
+                    startTemp: '',
+                    endTime: '',
+                    endTemp: '',
+                    notes: ''
+                });
+                this.renderLog('cooling');
+            }
+
+            updateCoolingItem(idx, field, value) {
+                this.data.cooling.items[idx][field] = value;
+            }
+
+            removeCoolingItem(idx) {
+                if (confirm('Remove this item?')) {
+                    this.data.cooling.items.splice(idx, 1);
+                    this.renderLog('cooling');
                 }
             }
 
@@ -2093,11 +2164,20 @@
                         name: item?.name || '',
                         time: item?.time || '',
                         temp: item?.temp || '',
-                        action: item?.action || '',
-                        coolingStartTime: item?.coolingStartTime || '',
-                        coolingStartTemp: item?.coolingStartTemp || '',
-                        coolingEndTime: item?.coolingEndTime || '',
-                        coolingEndTemp: item?.coolingEndTemp || ''
+                        action: item?.action || ''
+                    }))
+                };
+
+                merged.cooling = {
+                    ...defaults.cooling,
+                    ...(parsed.cooling || {}),
+                    items: (Array.isArray(parsed.cooling?.items) ? parsed.cooling.items : defaults.cooling.items).map(item => ({
+                        name: item?.name || '',
+                        startTime: item?.startTime || '',
+                        startTemp: item?.startTemp || '',
+                        endTime: item?.endTime || '',
+                        endTemp: item?.endTemp || '',
+                        notes: item?.notes || ''
                     }))
                 };
 
@@ -2182,11 +2262,19 @@
                             ...item,
                             time: '',
                             temp: '',
-                            action: '',
-                            coolingStartTime: '',
-                            coolingStartTemp: '',
-                            coolingEndTime: '',
-                            coolingEndTemp: ''
+                            action: ''
+                        }))
+                    },
+                    cooling: {
+                        ...this.data.cooling,
+                        initials: '',
+                        items: (this.data.cooling?.items || []).map(item => ({
+                            ...item,
+                            startTime: '',
+                            startTemp: '',
+                            endTime: '',
+                            endTemp: '',
+                            notes: ''
                         }))
                     },
                     corrective: {
@@ -2292,7 +2380,7 @@
             }
 
             exportPDF(sectionType = null) {
-                const shouldValidateCurrent = !sectionType && ['opening', 'closing', 'temp', 'hot', 'cold', 'cooking'].includes(this.currentLog);
+                const shouldValidateCurrent = !sectionType && ['opening', 'closing', 'temp', 'hot', 'cold', 'cooking', 'cooling'].includes(this.currentLog);
                 if (shouldValidateCurrent) {
                     const validation = this.validateCurrentLog();
                     if (!validation.valid) {
@@ -2633,7 +2721,7 @@
                 }
 
                 // 6. COOKING/REHEATING LOG
-                const hasCookingData = this.data.cooking.items.some(i => i.temp || i.time || i.name);
+                const hasCookingData = this.data.cooking.items.some(i => this.hasValue(i.temp) || this.hasValue(i.time) || this.hasValue(i.action));
                 if (!sectionType && hasCookingData) {
                     hasData = true;
                     html += `
@@ -2648,7 +2736,6 @@
                     `;
                     this.data.cooking.items.forEach(item => {
                         const tempClass = item.temp && parseFloat(item.temp) < 75 ? 'unsafe' : item.temp ? 'safe' : '';
-                        const hasCoolingData = this.hasValue(item.coolingStartTime) || this.hasValue(item.coolingStartTemp) || this.hasValue(item.coolingEndTime) || this.hasValue(item.coolingEndTemp);
                         html += `
                             <tr>
                                 <td><strong>${item.name || '-'}</strong></td>
@@ -2657,18 +2744,6 @@
                                 <td class="notes">${item.action || (item.temp && parseFloat(item.temp) < 75 ? '<span class="unsafe">Below 75°C - action required</span>' : '')}</td>
                             </tr>
                         `;
-                        if (hasCoolingData) {
-                            html += `
-                                <tr>
-                                    <td colspan="4" class="notes">
-                                        <strong>Cooling:</strong>
-                                        Start ${item.coolingStartTime || '-'} (${item.coolingStartTemp ? item.coolingStartTemp + '°C' : '-'})
-                                        &nbsp;|&nbsp;
-                                        End ${item.coolingEndTime || '-'} (${item.coolingEndTemp ? item.coolingEndTemp + '°C' : '-'})
-                                    </td>
-                                </tr>
-                            `;
-                        }
                     });
                     html += `
                                 </tbody>
@@ -2677,7 +2752,46 @@
                     `;
                 }
 
-                // 7. CORRECTIVE ACTION LOG
+                // 7. COOLING LOG
+                const completedCoolingItems = (this.data.cooling?.items || []).filter(item =>
+                    this.hasValue(item.name) &&
+                    this.hasValue(item.startTime) &&
+                    this.hasValue(item.startTemp) &&
+                    this.hasValue(item.endTime) &&
+                    this.hasValue(item.endTemp)
+                );
+                if (!sectionType && completedCoolingItems.length > 0) {
+                    hasData = true;
+                    html += `
+                        <div class="section">
+                            <h2>🧊 COOLING LOG</h2>
+                            <p><strong>Initials:</strong> ${this.data.cooling.initials || 'N/A'}</p>
+                            <table>
+                                <thead>
+                                    <tr><th>Item</th><th>Start Time</th><th>Start Temp</th><th>End Time</th><th>End Temp</th><th>Notes</th></tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    completedCoolingItems.forEach(item => {
+                        html += `
+                            <tr>
+                                <td><strong>${item.name}</strong></td>
+                                <td>${item.startTime}</td>
+                                <td>${item.startTemp}°C</td>
+                                <td>${item.endTime}</td>
+                                <td>${item.endTemp}°C</td>
+                                <td class="notes">${item.notes || ''}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // 8. CORRECTIVE ACTION LOG
                 if (!sectionType && this.data.corrective.entries.length > 0) {
                     hasData = true;
                     html += `
@@ -2707,7 +2821,7 @@
                     `;
                 }
 
-                // 8. CLOSING CHECKS
+                // 9. CLOSING CHECKS
                 if ((!sectionType || sectionType === 'closing') && (this.data.closing.checks.some(c => c.yes || c.no) || this.data.closing.signed.name)) {
                     hasData = true;
                     html += `
