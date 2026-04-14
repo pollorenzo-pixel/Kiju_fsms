@@ -1108,8 +1108,17 @@
                 return `yume_fsms_data_${this.currentLocation.replace(/\s+/g, '_').toLowerCase()}`;
             }
 
+            getTempLogTimes() {
+                return ['10:00', '13:00', '16:00'];
+            }
+
             initializeData() {
                 const serviceTimes = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+                const tempTimes = this.getTempLogTimes();
+                const makeTempEquipment = (name) => ({
+                    name,
+                    tempSlots: Object.fromEntries(tempTimes.map(time => [time, '']))
+                });
                 return {
                     opening: {
                         title: 'Daily Opening Checklist',
@@ -1129,14 +1138,15 @@
                     },
                     temp: {
                         title: 'Fridge/Freezer Temperature Log',
+                        tempTimes,
                         fridges: [
-                            { name: 'Walk-in Fridge #1', t12: '', t16: '', t20: '' },
-                            { name: 'Prep Fridge #2', t12: '', t16: '', t20: '' },
-                            { name: 'Prep Fridge #3', t12: '', t16: '', t20: '' }
+                            makeTempEquipment('Walk-in Fridge #1'),
+                            makeTempEquipment('Prep Fridge #2'),
+                            makeTempEquipment('Prep Fridge #3')
                         ],
                         freezers: [
-                            { name: 'Freezer #1', t12: '', t16: '', t20: '' },
-                            { name: 'Freezer #2', t12: '', t16: '', t20: '' }
+                            makeTempEquipment('Freezer #1'),
+                            makeTempEquipment('Freezer #2')
                         ],
                         notes: '',
                         initials: ''
@@ -1374,6 +1384,7 @@
             }
 
             renderTempLog(data) {
+                const tempTimes = this.getTempLogTimes();
                 return `
                     <div class="log-header">
                         <h2>🌡️ ${data.title}</h2>
@@ -1400,24 +1411,24 @@
                         <div class="temp-grid">
                             <table class="temp-table">
                                 <thead>
-                                    <tr><th>Equipment</th><th>12:00</th><th>16:00</th><th>20:00</th><th></th></tr>
+                                    <tr><th>Equipment</th>${tempTimes.map(time => `<th>${time}</th>`).join('')}<th></th></tr>
                                 </thead>
                                 <tbody>
                                     ${data.fridges.map((fridge, idx) => `
                                         <tr>
                                             <td><strong>${fridge.name}</strong></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.t12, 'fridge')}" value="${fridge.t12}" onchange="app.updateTemp('fridges', ${idx}, 't12', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.t16, 'fridge')}" value="${fridge.t16}" onchange="app.updateTemp('fridges', ${idx}, 't16', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.t20, 'fridge')}" value="${fridge.t20}" onchange="app.updateTemp('fridges', ${idx}, 't20', this.value)" placeholder="°C"></td>
+                                            ${tempTimes.map(time => `
+                                                <td><input type="number" class="temp-input-cell ${this.getTempClass(fridge.tempSlots?.[time], 'fridge')}" value="${fridge.tempSlots?.[time] ?? ''}" onchange="app.updateTemp('fridges', ${idx}, '${time}', this.value)" placeholder="°C"></td>
+                                            `).join('')}
                                             <td><button class="btn-delete" onclick="app.removeEquipment('fridges', ${idx})">✕</button></td>
                                         </tr>
                                     `).join('')}
                                     ${data.freezers.map((freezer, idx) => `
                                         <tr style="background: rgba(52, 152, 219, 0.05);">
                                             <td><strong>${freezer.name}</strong></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.t12, 'freezer')}" value="${freezer.t12}" onchange="app.updateTemp('freezers', ${idx}, 't12', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.t16, 'freezer')}" value="${freezer.t16}" onchange="app.updateTemp('freezers', ${idx}, 't16', this.value)" placeholder="°C"></td>
-                                            <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.t20, 'freezer')}" value="${freezer.t20}" onchange="app.updateTemp('freezers', ${idx}, 't20', this.value)" placeholder="°C"></td>
+                                            ${tempTimes.map(time => `
+                                                <td><input type="number" class="temp-input-cell ${this.getTempClass(freezer.tempSlots?.[time], 'freezer')}" value="${freezer.tempSlots?.[time] ?? ''}" onchange="app.updateTemp('freezers', ${idx}, '${time}', this.value)" placeholder="°C"></td>
+                                            `).join('')}
                                             <td><button class="btn-delete" onclick="app.removeEquipment('freezers', ${idx})">✕</button></td>
                                         </tr>
                                     `).join('')}
@@ -1684,8 +1695,9 @@
             }
 
             validateTempLog() {
+                const tempTimes = this.getTempLogTimes();
                 const equipmentComplete = [...this.data.temp.fridges, ...this.data.temp.freezers]
-                    .every(item => this.hasValue(item.t12) && this.hasValue(item.t16) && this.hasValue(item.t20));
+                    .every(item => tempTimes.every(time => this.hasValue(item.tempSlots?.[time])));
                 const initialsComplete = this.hasValue(this.data.temp.initials);
 
                 if (equipmentComplete && initialsComplete) {
@@ -1694,7 +1706,7 @@
 
                 return {
                     valid: false,
-                    message: 'This record is incomplete. Please fill all required fields for compliance.'
+                    message: 'Temperature Log is incomplete. For compliance, all required fields must be filled.'
                 };
             }
 
@@ -1792,20 +1804,29 @@
                 return num > 5 ? 'unsafe' : 'safe';
             }
 
-            updateTemp(equipment, idx, field, value) {
-                this.data.temp[equipment][idx][field] = value;
+            updateTemp(equipment, idx, time, value) {
+                if (!this.data.temp[equipment][idx].tempSlots) {
+                    this.data.temp[equipment][idx].tempSlots = {};
+                }
+                this.data.temp[equipment][idx].tempSlots[time] = value;
                 this.renderLog('temp');
             }
 
             addFridge() {
                 const num = this.data.temp.fridges.length + 1;
-                this.data.temp.fridges.push({ name: `Fridge #${num}`, t12: '', t16: '', t20: '' });
+                this.data.temp.fridges.push({
+                    name: `Fridge #${num}`,
+                    tempSlots: Object.fromEntries(this.getTempLogTimes().map(time => [time, '']))
+                });
                 this.renderLog('temp');
             }
 
             addFreezer() {
                 const num = this.data.temp.freezers.length + 1;
-                this.data.temp.freezers.push({ name: `Freezer #${num}`, t12: '', t16: '', t20: '' });
+                this.data.temp.freezers.push({
+                    name: `Freezer #${num}`,
+                    tempSlots: Object.fromEntries(this.getTempLogTimes().map(time => [time, '']))
+                });
                 this.renderLog('temp');
             }
 
@@ -1930,6 +1951,7 @@
             normalizeLoadedData(parsed) {
                 const defaults = this.initializeData();
                 const merged = { ...defaults, ...parsed };
+                const tempTimes = this.getTempLogTimes();
 
                 const serviceTimes = defaults.hot.times;
                 const alignTemps = (items = []) =>
@@ -1953,20 +1975,26 @@
                     items: alignTemps((parsed.cold && Array.isArray(parsed.cold.items)) ? parsed.cold.items : defaults.cold.items)
                 };
 
-                const mapTempItem = (item, fallbackName) => ({
-                    name: item?.name || fallbackName,
-                    t12: item?.t12 ?? item?.opening ?? '',
-                    t16: item?.t16 ?? item?.check4pm ?? '',
-                    t20: item?.t20 ?? item?.closing ?? ''
-                });
+                const mapTempItem = (item, fallbackName) => {
+                    const rawSlots = item?.tempSlots && typeof item.tempSlots === 'object' ? item.tempSlots : {};
+                    return {
+                        name: item?.name || fallbackName,
+                        tempSlots: {
+                            '10:00': rawSlots['10:00'] ?? item?.opening ?? item?.t12 ?? '',
+                            '13:00': rawSlots['13:00'] ?? item?.check4pm ?? item?.t16 ?? '',
+                            '16:00': rawSlots['16:00'] ?? item?.closing ?? item?.t20 ?? ''
+                        }
+                    };
+                };
 
                 merged.temp = {
                     ...defaults.temp,
                     ...(parsed.temp || {}),
-                    fridges: (parsed.temp?.fridges || defaults.temp.fridges).map((item, idx) =>
+                    tempTimes,
+                    fridges: (Array.isArray(parsed.temp?.fridges) ? parsed.temp.fridges : defaults.temp.fridges).map((item, idx) =>
                         mapTempItem(item, defaults.temp.fridges[idx]?.name || `Fridge #${idx + 1}`)
                     ),
-                    freezers: (parsed.temp?.freezers || defaults.temp.freezers).map((item, idx) =>
+                    freezers: (Array.isArray(parsed.temp?.freezers) ? parsed.temp.freezers : defaults.temp.freezers).map((item, idx) =>
                         mapTempItem(item, defaults.temp.freezers[idx]?.name || `Freezer #${idx + 1}`)
                     )
                 };
@@ -2009,9 +2037,7 @@
                 }));
                 const clearTempEquipment = (items = []) => items.map(item => ({
                     ...item,
-                    t12: '',
-                    t16: '',
-                    t20: ''
+                    tempSlots: Object.fromEntries(this.getTempLogTimes().map(time => [time, '']))
                 }));
                 const clearHotColdItems = (items = [], times = []) => items.map(item => ({
                     ...item,
@@ -2338,8 +2364,9 @@
                 }
 
                 // 2. TEMPERATURE LOG
-                const hasFridgeData = this.data.temp.fridges.some(f => f.t12 || f.t16 || f.t20);
-                const hasFreezerData = this.data.temp.freezers.some(f => f.t12 || f.t16 || f.t20);
+                const tempTimes = this.getTempLogTimes();
+                const hasFridgeData = this.data.temp.fridges.some(f => tempTimes.some(time => this.hasValue(f.tempSlots?.[time])));
+                const hasFreezerData = this.data.temp.freezers.some(f => tempTimes.some(time => this.hasValue(f.tempSlots?.[time])));
                 
                 if ((!sectionType || sectionType === 'temp') && (hasFridgeData || hasFreezerData)) {
                     hasData = true;
@@ -2350,7 +2377,7 @@
                                <em>Fridges: 1-5°C | Freezers: ≤-18°C</em></p>
                             <table>
                                 <thead>
-                                    <tr><th>Equipment</th><th>12:00</th><th>16:00</th><th>20:00</th></tr>
+                                    <tr><th>Equipment</th>${tempTimes.map(time => `<th>${time}</th>`).join('')}</tr>
                                 </thead>
                                 <tbody>
                     `;
@@ -2364,9 +2391,7 @@
                         html += `
                             <tr>
                                 <td><strong>${item.name}</strong></td>
-                                <td class="${getClass(item.t12)}">${item.t12 ? item.t12 + '°C' : '-'}</td>
-                                <td class="${getClass(item.t16)}">${item.t16 ? item.t16 + '°C' : '-'}</td>
-                                <td class="${getClass(item.t20)}">${item.t20 ? item.t20 + '°C' : '-'}</td>
+                                ${tempTimes.map(time => `<td class="${getClass(item.tempSlots?.[time])}">${this.hasValue(item.tempSlots?.[time]) ? item.tempSlots[time] + '°C' : '-'}</td>`).join('')}
                             </tr>
                         `;
                     });
@@ -2380,9 +2405,7 @@
                         html += `
                             <tr style="background: rgba(52, 152, 219, 0.05);">
                                 <td><strong>${item.name}</strong></td>
-                                <td class="${getClass(item.t12)}">${item.t12 ? item.t12 + '°C' : '-'}</td>
-                                <td class="${getClass(item.t16)}">${item.t16 ? item.t16 + '°C' : '-'}</td>
-                                <td class="${getClass(item.t20)}">${item.t20 ? item.t20 + '°C' : '-'}</td>
+                                ${tempTimes.map(time => `<td class="${getClass(item.tempSlots?.[time])}">${this.hasValue(item.tempSlots?.[time]) ? item.tempSlots[time] + '°C' : '-'}</td>`).join('')}
                             </tr>
                         `;
                     });
