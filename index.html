@@ -966,7 +966,13 @@
                 </div>
             </div>
             <div class="header-info">
-                <span>📅 <span id="currentDate"></span></span>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap: wrap;">
+                    <span>📅</span>
+                    <input type="date" id="activeDatePicker" class="form-input" style="padding: 8px 10px; font-size: 13px; min-height: 36px; width: 170px;" onchange="app.changeDate(this.value)">
+                    <button class="btn-sm btn-light" onclick="app.setToday()" type="button">Today</button>
+                    <button class="btn-sm btn-light" onclick="app.setYesterday()" type="button">Yesterday</button>
+                </div>
+                <span id="currentDate"></span>
                 <span id="connectionStatus">🟢 Online</span>
                 <div class="location-selector" onclick="app.openLocationModal()" title="Click to change location">
                     <span>📍</span>
@@ -1047,6 +1053,7 @@
                 this.brandName = 'Kiju';
                 this.currentLog = 'opening';
                 this.currentLocation = 'Battersea';
+                this.currentDate = this.today();
                 this.locations = ['Battersea', 'Shoreditch', 'Camden', 'Test Kitchen'];
                 this.data = {};
                 this.deferredPrompt = null;
@@ -1154,11 +1161,13 @@
             }
 
             // ==========================================
-            // DATA MANAGEMENT (Per Location)
+            // DATA MANAGEMENT (Per Location + Date)
             // ==========================================
 
             getStorageKey() {
-                return `yume_fsms_data_${this.currentLocation.replace(/\s+/g, '_').toLowerCase()}`;
+                const location = this.currentLocation.replace(/\s+/g, '_').toLowerCase();
+                const date = this.currentDate;
+                return `kiju_fsms_data_${location}_${date}`;
             }
 
             getTempLogTimes() {
@@ -1338,9 +1347,34 @@
             }
 
             updateDate() {
-                const now = new Date();
+                const activeDate = new Date(`${this.currentDate}T00:00:00`);
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', options);
+                const friendlyDate = activeDate.toLocaleDateString('en-GB', options);
+                document.getElementById('currentDate').textContent = `Viewing logs for: ${friendlyDate}`;
+                const datePicker = document.getElementById('activeDatePicker');
+                if (datePicker) {
+                    datePicker.value = this.currentDate;
+                }
+            }
+
+            changeDate(date) {
+                if (!date || date === this.currentDate) return;
+                this.saveToStorage();
+                this.currentDate = date;
+                this.loadFromStorage();
+                this.updateDate();
+                this.renderLog(this.currentLog);
+                this.showToast(`Loaded logs for ${date}`, 'success');
+            }
+
+            setToday() {
+                this.changeDate(this.today());
+            }
+
+            setYesterday() {
+                const d = new Date();
+                d.setDate(d.getDate() - 1);
+                this.changeDate(d.toISOString().split('T')[0]);
             }
 
             today() {
@@ -1409,7 +1443,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Date</label>
-                                <input type="date" class="form-input" value="${this.today()}" id="openingDate">
+                                <input type="date" class="form-input" value="${this.currentDate}" id="openingDate">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">AM Staff</label>
@@ -1464,7 +1498,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Date</label>
-                                <input type="date" class="form-input" value="${this.today()}">
+                                <input type="date" class="form-input" value="${this.currentDate}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Initials</label>
@@ -1522,7 +1556,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Date</label>
-                                <input type="date" class="form-input" value="${this.today()}">
+                                <input type="date" class="form-input" value="${this.currentDate}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Initials</label>
@@ -1604,7 +1638,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Date</label>
-                                <input type="date" class="form-input" value="${this.today()}">
+                                <input type="date" class="form-input" value="${this.currentDate}">
                             </div>
                         </div>
                         <p style="margin-bottom: 16px; color: var(--text-light); font-size: 14px;">${data.subtitle}</p>
@@ -1646,7 +1680,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Date</label>
-                                <input type="date" class="form-input" value="${this.today()}">
+                                <input type="date" class="form-input" value="${this.currentDate}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Staff Initials</label>
@@ -1725,7 +1759,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Date</label>
-                                <input type="date" class="form-input" value="${this.today()}">
+                                <input type="date" class="form-input" value="${this.currentDate}">
                             </div>
                         </div>
                         <div class="checklist-grid">
@@ -1993,7 +2027,7 @@
             }
 
             addDeliveryEntry() {
-                this.data.delivery.entries.push({ date: this.today(), product: '', temp: '', comments: '' });
+                this.data.delivery.entries.push({ date: this.currentDate, product: '', temp: '', comments: '' });
                 this.renderLog('delivery');
             }
 
@@ -2078,7 +2112,7 @@
             }
 
             // ==========================================
-            // STORAGE (Per Location)
+            // STORAGE (Per Location + Date)
             // ==========================================
 
             saveToStorage() {
@@ -2098,12 +2132,37 @@
                     try {
                         const parsed = JSON.parse(saved);
                         this.data = this.normalizeLoadedData(parsed);
+                        return;
                     } catch (e) {
                         this.data = this.initializeData();
+                        return;
                     }
-                } else {
-                    this.data = this.initializeData();
                 }
+
+                const isToday = this.currentDate === this.today();
+                const location = this.currentLocation.replace(/\s+/g, '_').toLowerCase();
+                const legacyKeys = [
+                    `kiju_fsms_data_${location}`,
+                    `yume_fsms_data_${location}`
+                ];
+
+                if (isToday) {
+                    for (const legacyKey of legacyKeys) {
+                        const legacySaved = localStorage.getItem(legacyKey);
+                        if (!legacySaved) continue;
+
+                        try {
+                            const parsed = JSON.parse(legacySaved);
+                            this.data = this.normalizeLoadedData(parsed);
+                            this.saveToStorage();
+                            return;
+                        } catch (e) {
+                            // Ignore malformed legacy data and continue
+                        }
+                    }
+                }
+
+                this.data = this.initializeData();
             }
 
             normalizeLoadedData(parsed) {
@@ -2292,11 +2351,11 @@
             }
 
             clearAllData() {
-                if (confirm(`⚠️ Delete ALL data for ${this.currentLocation} permanently?`)) {
+                if (confirm(`⚠️ Delete all logs for ${this.currentLocation} on ${this.currentDate}?`)) {
                     localStorage.removeItem(this.getStorageKey());
                     this.data = this.initializeData();
                     this.renderLog(this.currentLog);
-                    this.showToast('All data cleared', 'error');
+                    this.showToast(`Logs cleared for ${this.currentDate}`, 'error');
                 }
             }
 
@@ -2394,7 +2453,7 @@
                     this.showToast('Unable to open export window. Please allow pop-ups and try again.', 'error');
                     return;
                 }
-                const date = this.today();
+                const date = this.currentDate;
                 const sectionTitles = {
                     opening: 'Opening Checks',
                     temp: 'Temperature Log',
@@ -2853,7 +2912,7 @@
                     html += `
                         <div class="section" style="text-align: center; padding: 40px; color: #666;">
                             <h2>No Data Recorded</h2>
-                            <p>No logs have been filled out for ${this.currentLocation} today.</p>
+                            <p>No logs have been filled out for ${this.currentLocation} on ${date}.</p>
                         </div>
                     `;
                 }
@@ -2897,7 +2956,7 @@
                         const saved = this.resetDailyValuesPreserveStructure();
                         this.renderLog(this.currentLog);
                         if (saved) {
-                            this.showToast('Final PDF exported. Daily logs reset for next service.', 'success');
+                            this.showToast('Final PDF exported. Daily logs reset for the selected date.', 'success');
                         } else {
                             this.showToast('PDF exported but daily reset could not be saved.', 'error');
                         }
